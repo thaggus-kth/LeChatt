@@ -14,5 +14,9 @@ public class hello {
 			System.out.println("odd");
 		}
 	}
+	
+	public void ebbasMetod() {
+		System.out.println("hej");
+	}
 
 }
