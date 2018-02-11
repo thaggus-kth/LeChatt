@@ -6,5 +6,9 @@ public class hello {
 		// TODO Auto-generated method stub
 		System.out.println(h);
 	}
+	
+	public void ebbasMetod() {
+		System.out.println("hej");
+	}
 
 }
