@@ -6,5 +6,13 @@ public class hello {
 		// TODO Auto-generated method stub
 		System.out.println(h);
 	}
+	
+	public void thomasMethod(int i) {
+		if (i % 2 == 0) {
+			System.out.println("even");
+		} else {
+			System.out.println("odd");
+		}
+	}
 
 }
