@@ -15,13 +15,13 @@ public class User implements Runnable {
 	private PrintWriter out;
 	private BufferedReader in;
 	
-	public void User(Socket mySocket) {
+	public User(Socket mySocket) {
 		Thread th = new Thread(this);
 		connection = mySocket;
 		th.start();
 	}
 	
-	public void User(String hostAddress, int port) {
+	public User(String hostAddress, int port) {
 		Thread th = new Thread(this);
 		try {
             connection = new Socket(hostAddress, port);
