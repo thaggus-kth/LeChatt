@@ -22,7 +22,7 @@ public class SessionController implements ConnectionObserver {
 	private HTMLDocument chatLog;
 
 	public SessionController(String myUsername, Color myColor,
-			String ipToConnectTo, int port) {
+			String ipToConnectTo, int port, String connectionGreeting) {
 		this.myUsername = myUsername;
 		this.myColor = myColor;
 		chatLog = new HTMLDocument();
