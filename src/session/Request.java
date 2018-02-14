@@ -6,13 +6,12 @@ import javax.swing.text.Element;
 
 public abstract class Request implements java.awt.event.ActionListener {
 	
-	public static final int DEFAULT_LIFETIME_SECONDS = 60;
+	public static final int DEFAULT_LIFETIME = 60*1000;
 	private static int nextID = 1;
 	private int myID;
 	/**
 	 * Lifetime of the event in miliseconds.
 	 */
-	private int lifetime = DEFAULT_LIFETIME_SECONDS * 1000;
 	private User myUser;
 	private String myMessage;
 	/* HTML Element in the chat log. Some requests want to modify this
