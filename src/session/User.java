@@ -7,43 +7,66 @@ import java.util.*;
 public class User implements Runnable {
 	private Socket connection;
 	private boolean connected;
-	Request[] myRequests;
-	Crypto[] myCryptos;
+	ArrayList<Request> myRequests;
+	ArrayList<Crypto> myCryptos;
 	String username;
 	private Crypto activeCrypto;
-	private ConnectionObserver[] observers;
-	private OutputStream out;
-	private InputStream in;
+	private ArrayList<ConnectionObserver> observers;
+	private PrintWriter out;
+	private BufferedReader in;
+	
+	public void User(Socket mySocket) {
+		
+	}
+	
+	public void User(String hostAddress, int port) {
+		try {
+            connection = new Socket(hostAddress, port);
+            out = new PrintWriter(connection.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(
+                                        connection.getInputStream()));
+        } catch (UnknownHostException e) {
+            System.err.println("Don't know about host.\n" + e);
+            System.exit(1);
+        } catch (IOException e) {
+        	System.err.println(e);
+        	System.exit(1);
+        }
+		
+		run();
+	}
 	
 	public void run() {
-		in = connection.getInputStream();
-		out = connection.getOutputStream();
+		String userInput;
+		while ((userInput = in.readLine()) != null) {
+		    writeLine(userInput);
+		}
 		
 	}
 	
 	public void writeLine(String message) {
-		
+		out.println(message);
 	}
 	
 	public void disconnect() {
-		
+		out.println("disconnect");
 	}
 	
 	public void addObserver(ConnectionObserver o) {
+		observers.add(o);
 		
 	}
 	
 	public void fireMessageEvent(Message m) {
-		for (connectionObserver o : observers) {
+		for (ConnectionObserver o : observers) {
 			o.newMessage(m);
 		}
 	}
 	
 	public void fireNewRequestEvent(Request r) {
-		for (connectionObserver o : observers) {
+		for (ConnectionObserver o : observers) {
 			o.newRequest(r);
 		}
-		
 	}
 	
 	public void sendKeyRequest(CryptoType c, String message) {
