@@ -63,9 +63,13 @@ public class SessionController implements ConnectionObserver {
 		throw new NotImplementedException();
 	}
 	
-	public void checkCryptoAvailable(String user, CryptoType c) {
-		// TODO: Implement
-		throw new NotImplementedException();
+	public boolean checkCryptoAvailable(String user, CryptoType c) {
+		for(Crypto crypto : user.myCryptos) {
+	        if(crypto.getType() == c) {
+	            return true
+	        }
+	    }
+	    return false;
 	}
 	
 	public void sendKeyRequest(String user, CryptoType c, String message) {
@@ -84,13 +88,11 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public void setMyColor(Color c) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		myColor = c;
 	}
 	
 	public void setMyUsername(String u) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		myUsername = u;
 	}
 	
 	public String[] getUsernameList() {
