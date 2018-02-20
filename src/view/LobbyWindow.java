@@ -20,6 +20,12 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		SERVER;
 	}
 	
+	private class MyException extends Exception {
+		MyException(String s) {
+			super(s);
+		}
+	}
+	
 	public LobbyWindow() {
 		super("LeChatt Lobby");
 		JPanel row1 = new JPanel();
@@ -91,7 +97,11 @@ public class LobbyWindow extends JFrame implements ActionListener {
 			selectColorButton.setBackground(selectedColor);
 			break;
 		case "START":
-			attemptStart();
+			try {
+				attemptStart();
+			} catch (MyException err) {
+				System.err.println(err);
+			}
 			break;
 		default:
 			System.err.println("LobbyWindow: unknown Action Command: "
@@ -99,11 +109,38 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		}
 	}
 	
-	private void attemptStart() {
+	private void attemptStart() throws MyException {
 		/* Collect information */
+		String name = nameEntry.getText();
+		String ip = ipEntry.getText();
+		int port;
+		
+		/* Validate */
+		try {
+			 port = Integer.valueOf(portEntry.getText());
+		} catch (NumberFormatException e) {
+			throw new MyException("Please specify a valid port no.");
+		}
+		if (name.isEmpty()) {
+			throw new MyException("Please enter a username.");
+			/* Maybe it would be smart to use an eventlistener to
+			 * keep the start button disabled until all fields are non-empty?
+			 */
+		}
+		if (ip.isEmpty()) {
+			// throw something
+			throw new MyException("Please enter an ip.");
+		}
+		if (selectedColor == null) {
+			throw new MyException("Please select a color");
+		}
+		String greeting = "hej"; //TODO: collect from user
+		MainController.newClientSession(name, ip, port, selectedColor,
+				greeting);
 		/* Create session controller */
 		/* Create window */
 		/* dispose */
+		dispose();
 	}
 	
 }

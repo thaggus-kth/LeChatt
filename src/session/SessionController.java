@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
 import javax.swing.text.html.*;
 
 // Remove the next line once all methods are implemented
@@ -28,10 +29,13 @@ public class SessionController implements ConnectionObserver {
 			String ipToConnectTo, int port, String connectionGreeting) {
 		this.myUsername = myUsername;
 		this.myColor = myColor;
-		chatLog = new HTMLDocument();
+		//chatLog = new HTMLDocument();
 		connectedUsers = new ArrayList<User>();
 		observers = new ArrayList<ChatObserver>();
 		
+		HTMLEditorKit kit = new HTMLEditorKit();
+		chatLog = (HTMLDocument) kit.createDefaultDocument();
+		writeToChatLog("<p>Welcome to LeChatt!</p>");
 		//TODO: Create a user object & attempt connecting to the
 		//		server
 	}
@@ -114,7 +118,10 @@ public class SessionController implements ConnectionObserver {
 	
 	public void sendTextMessage(String message) {
 		// TODO: Implement
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
+		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
+		String insert = openTag + message + "</p>";
+		writeToChatLog(insert);
 	}
 	
 	/**
@@ -162,13 +169,15 @@ public class SessionController implements ConnectionObserver {
 	 * @throws BadLocationException
 	 * @throws IOException
 	 */
-	void writeToChatLog(String message) throws BadLocationException, IOException {
-		chatLog = getChatLog();
-		if(chatLog == null) {
-			HTMLEditorKit kit = new HTMLEditorKit();
-			chatLog = (HTMLDocument) kit.createDefaultDocument();
+	void writeToChatLog(String message) {
+		try {
+			chatLog.insertBeforeEnd(chatLog.getDefaultRootElement(), message);
+		} catch (BadLocationException e) {
+			System.err.println(e);
+		} catch (IOException e) {
+			System.err.print(e);
 		}
-		chatLog.insertBeforeEnd(chatLog.getElement("TEXT"), message);
+		System.out.print(message);
 		notifyObservers();
 	}
 	
@@ -184,7 +193,7 @@ public class SessionController implements ConnectionObserver {
 	
 	public void disconnect() {
 		// TODO: Implement
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
 	}
 	
 	
@@ -198,6 +207,7 @@ public class SessionController implements ConnectionObserver {
 		}
 	}
 	
+
 	/**
 	 * Finds the User object corresponding to the String username
 	 * @param strUsername String containing the username of the sought User
@@ -211,5 +221,20 @@ public class SessionController implements ConnectionObserver {
 			}
 		}
 		return wantedUser;
+
+	public void addObserver(ChatObserver o) {
+		observers.add(o);
+	}
+	
+	/**
+	 * Based on https://stackoverflow.com/questions/3607858/convert-a-rgb-color-value-to-a-hexadecimal
+	 * @param c the Color to convert
+	 * @return String containing the hex representation of the color
+	 */
+	public static String colorToHex(Color c) {
+		String hex = String.format("#%02x%02x%02x", c.getRed(), c.getGreen(),
+									c.getBlue());
+		return hex;
+
 	}
 }
