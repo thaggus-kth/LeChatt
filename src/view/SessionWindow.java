@@ -38,6 +38,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		setLayout(new BorderLayout());
 		view.setPreferredSize(new Dimension(600,400));
 		view.setEditable(false);
+		view.setContentType("text/html");
 		add(view, BorderLayout.CENTER);
 		add(userInfo, BorderLayout.EAST);
 		southPanel.setLayout(new BorderLayout());
@@ -65,6 +66,8 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		menu.add(menuItem);
 		menuBar.add(menu);
 		
+		sc.addObserver(this);
+		
 		setTitle("Le Chatt");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
@@ -72,8 +75,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	}
 	@Override
 	public void updateView() {
-		// TODO Auto-generated method stub
-
+		view.setDocument(mySession.getChatLog());
 	}
 
 	@Override
@@ -120,11 +122,14 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	@Override
 	public void keyPressed(KeyEvent e) {		
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-			attemptSendMessage();
+			if (!e.isShiftDown()) {
+				attemptSendMessage();
+				e.consume();
+			}
 		}
 	}
 	@Override
 	public void keyReleased(KeyEvent e) {
-		sendButton.setEnabled(!writeArea.getText().isEmpty());
+
 	}
 }
