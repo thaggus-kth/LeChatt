@@ -61,9 +61,30 @@ public class SessionController implements ConnectionObserver {
 		throw new NotImplementedException();
 	}
 	
-	public void sendFileRequest(String user, CryptoType c) {
-		// TODO: Implement
-		throw new NotImplementedException();
+	public void sendFileRequest(String user, File file, CryptoType c, 
+								String message) {
+		if (checkCryptoAvailable(user, c)) {
+			User receiver = stringToUser(user); 
+			Request fileRequest = new OutgoingFileRequest(Request.DEFAULT_LIFETIME,
+					message, receiver, file, c);
+			newRequest(fileRequest);
+		} else {
+			//notify that the crypto is unavailable
+		}
+	}
+	
+	
+	/**
+	 * Creates a Outgoing keyrequest object and forwards it to the newRequest method
+	 * @param user User to receive the request
+	 * @param c	Crypto for which a key is requested
+	 * @param message Text message accompanying the request
+	 */
+	public void sendKeyRequest(String user, CryptoType c, String message) {
+		User receiver = stringToUser(user);
+		Request keyRequest = new OutgoingKeyRequest(Request.DEFAULT_LIFETIME, message, receiver, c);
+		newRequest(keyRequest);
+		}
 	}
 	
 	/**
@@ -75,18 +96,20 @@ public class SessionController implements ConnectionObserver {
 	public boolean checkCryptoAvailable(String user, CryptoType c) {
 		for(Crypto crypto : user.myCryptos) {
 	        if(crypto.getType() == c) {
-	            return true
+	            return true;
 	        }
 	    }
 	    return false;
 	}
 	
-	public void sendKeyRequest(String user, CryptoType c, String message) {
-		Request keyRequest = new OutgoingKeyRequest(DEFAULT_LIFETIME, message, user, )
-	}
-	
+	/**
+	 * Sets active crypto for specified user
+	 * @param user whose crypto is changed
+	 * @param c cryptoType changed to
+	 */
 	public void setCrypto(String user, CryptoType c) {
-		user.setActiveCrypto(c);
+		User receiver = stringToUser(user);
+		receiver.setActiveCrypto(c);
 	}
 	
 	public void sendTextMessage(String message) {
@@ -148,9 +171,10 @@ public class SessionController implements ConnectionObserver {
 		notifyObservers();
 	}
 	
-	public void kickUser() {
-		// TODO: Implement
-		throw new NotImplementedException();
+	public void kickUser(String username) {
+		User kickMe = stringToUser(username);
+		kickMe.disconnect();
+		notifyObservers();
 	}
 	
 	public void disconnect() {
@@ -167,5 +191,15 @@ public class SessionController implements ConnectionObserver {
 		for (ChatObserver o : observers) {
 			o.updateView();
 		}
+	}
+	
+	private User stringToUser(String strUsername) {
+		User wantedUser;
+		for(User u : connectedUsers) {
+			if (u.username == strUsername) {
+				wantedUser = u;
+			}
+		}
+		return wantedUser;
 	}
 }
