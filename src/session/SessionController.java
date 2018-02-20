@@ -1,9 +1,12 @@
 package session;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.html.*;
+
 // Remove the next line once all methods are implemented
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -63,6 +66,12 @@ public class SessionController implements ConnectionObserver {
 		throw new NotImplementedException();
 	}
 	
+	/**
+	 * Checks whether the specified user can encrypt/decrypt the specified crypto
+	 * @param user checked
+	 * @param c	Crypto type investigated
+	 * @return true if crypto is available for the user
+	 */
 	public boolean checkCryptoAvailable(String user, CryptoType c) {
 		for(Crypto crypto : user.myCryptos) {
 	        if(crypto.getType() == c) {
@@ -73,13 +82,11 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public void sendKeyRequest(String user, CryptoType c, String message) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		Request keyRequest = new OutgoingKeyRequest(DEFAULT_LIFETIME, message, user, )
 	}
 	
 	public void setCrypto(String user, CryptoType c) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		user.setActiveCrypto(c);
 	}
 	
 	public void sendTextMessage(String message) {
@@ -87,22 +94,58 @@ public class SessionController implements ConnectionObserver {
 		throw new NotImplementedException();
 	}
 	
+	/**
+	 * sets user's color
+	 * @param c color
+	 */
 	public void setMyColor(Color c) {
 		myColor = c;
 	}
 	
+	/**
+	 * Sets username
+	 * @param u username
+	 */
 	public void setMyUsername(String u) {
 		myUsername = u;
 	}
 	
-	public String[] getUsernameList() {
-		// TODO: Implement
-		throw new NotImplementedException();
+	/**
+	 * For server, returns the usernames of connected clients. For client, 
+	 * returns the username of the server. 
+	 * @return ArrayList of strings of usernames. 
+	 */
+	public ArrayList<String> getUsernameList() {
+		ArrayList<String> UsernameList = new ArrayList<String>();
+		for( User u : connectedUsers) {
+			UsernameList.add(u.username);
+		}
+		return UsernameList;
 	}
 	
-	void writeToChatLog(String message) {
-		// TODO: Implement
-		throw new NotImplementedException();
+	/**
+	 * Gets the HTMLDocument containing the XML parsed chatlog
+	 * @return HTMLDocument containing the chatLog in XML format.
+	 */
+	public HTMLDocument getChatLog() {
+		return chatLog;
+	}
+	
+	/**
+	 * Adds HTMl formatted text to the chat log if there is one. Creates a HTML
+	 * document if there is none already
+	 * @param message HTML formatted text containing the text message
+	 * @throws BadLocationException
+	 * @throws IOException
+	 */
+	void writeToChatLog(String message) throws BadLocationException, IOException {
+		chatLog = getChatLog();
+		if(chatLog == null) {
+			HTMLEditorKit kit = new HTMLEditorKit();
+			chatLog = (HTMLDocument) kit.createDefaultDocument();
+		}
+		chatLog.insertBeforeEnd(chatLog.getElement("TEXT"), message);
+		notifyObservers();
 	}
 	
 	public void kickUser() {
@@ -115,10 +158,6 @@ public class SessionController implements ConnectionObserver {
 		throw new NotImplementedException();
 	}
 	
-	/* Renamed from UML: getHTMLDocument to getChatLog */
-	public HTMLDocument getChatLog() {
-		return chatLog;
-	}
 	
 	/**
 	 * Notifies observers (typically view objects) that there is an update
