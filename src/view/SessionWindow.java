@@ -20,6 +20,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	private JPanel userInfo;
 	private JTextPane view;
 	private JTextArea writeArea;
+	private JFileChooser fileChooser;
 	
 	public SessionWindow(SessionController sc) {
 		JPanel southPanel = new JPanel();
@@ -34,6 +35,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		sendButton = new JButton("Skicka");
 		sendFileButton = new JButton("Skicka fil...");
 		writeArea = new TextAreaWithHint("Skriv ett meddelande här...");
+		fileChooser = new JFileChooser("Välj vilken fil du vill skicka...");
 		
 		setLayout(new BorderLayout());
 		view.setPreferredSize(new Dimension(600,400));
@@ -89,7 +91,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 			attemptSendMessage();
 			break;
 		case "SEND_FILE":
-			System.out.println("sessionWindow: Action Command not implemented: SEND_FILE");
+			showFileChooserWindow();
 			break;
 		case "EXIT":
 			dispose();
@@ -106,6 +108,16 @@ public class SessionWindow extends JFrame implements ChatObserver,
 			writeArea.setText("");
 		} else {
 			//TODO: spela fel-ljud
+		}
+	}
+	
+	private void showFileChooserWindow() {
+		int usersChoice = fileChooser.showOpenDialog(this);
+		if (usersChoice == JFileChooser.APPROVE_OPTION) {
+			//TODO: get neccessary info. probably we want to use a whole JFrame for this, and put the
+			// file chooser button in it (similar to the lobby window)
+			String serverUser = mySession.getUsernameList().get(0);
+			mySession.sendFileRequest(serverUser, fileChooser.getSelectedFile(), c, message);
 		}
 	}
 	
@@ -130,6 +142,6 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	}
 	@Override
 	public void keyReleased(KeyEvent e) {
-
+		/* Do nothing */
 	}
 }
