@@ -156,7 +156,8 @@ public class SessionController implements ConnectionObserver {
 	
 	/**
 	 * Adds HTMl formatted text to the chat log if there is one. Creates a HTML
-	 * document if there is none already
+	 * document if there is none already. Notifies observers that the log
+	 * has been changed. 
 	 * @param message HTML formatted text containing the text message
 	 * @throws BadLocationException
 	 * @throws IOException
@@ -171,6 +172,10 @@ public class SessionController implements ConnectionObserver {
 		notifyObservers();
 	}
 	
+	/**
+	 * Disconnects the user specified by the username. Notifies the observers.
+	 * @param username Username of the User to be kicked. 
+	 */
 	public void kickUser(String username) {
 		User kickMe = stringToUser(username);
 		kickMe.disconnect();
@@ -193,6 +198,11 @@ public class SessionController implements ConnectionObserver {
 		}
 	}
 	
+	/**
+	 * Finds the User object corresponding to the String username
+	 * @param strUsername String containing the username of the sought User
+	 * @return User object corresponding to the username.
+	 */
 	private User stringToUser(String strUsername) {
 		User wantedUser;
 		for(User u : connectedUsers) {
