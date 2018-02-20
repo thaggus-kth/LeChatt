@@ -91,7 +91,13 @@ public class SessionController implements ConnectionObserver {
 	
 	public void sendTextMessage(String message) {
 		// TODO: Implement
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
+		String insert = "<p>" + message + "</p>";
+		try {
+			chatLog.insertAfterEnd(chatLog.getDefaultRootElement(), insert);
+		} catch (Exception e) {
+			System.err.println(e);
+		}
 	}
 	
 	/**
@@ -155,7 +161,7 @@ public class SessionController implements ConnectionObserver {
 	
 	public void disconnect() {
 		// TODO: Implement
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
 	}
 	
 	

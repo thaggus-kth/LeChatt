@@ -1,5 +1,7 @@
 package view;
 
+import java.awt.Color;
+
 import session.SessionController;
 
 public final class MainController {
@@ -21,11 +23,16 @@ public final class MainController {
 		lw.setVisible(true);
 	}
 	
-//	public static void newClientSession(String username, String ip, int port,
-//			Color color, String greeting) {
-//		SessionController sc = new SessionController(username, color, ip, port, greeting);
-//		SessionWindow sw;
-//	}
+	public static void newClientSession(String username, String ip, int port,
+			Color color, String greeting) {
+		SessionController sc = new SessionController(username, color, ip, port, greeting);
+		SessionWindow sw = new SessionWindow(sc);
+	}
+
+	public static void newServerSession(String username, int port,
+														Color color) {
+		
+	}
 	
 
 }
