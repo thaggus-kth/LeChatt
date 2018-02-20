@@ -1,6 +1,7 @@
 package session;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.text.html.HTMLDocument;
@@ -84,7 +85,13 @@ public class SessionController implements ConnectionObserver {
 	
 	public void sendTextMessage(String message) {
 		// TODO: Implement
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
+		String insert = "<p>" + message + "</p>";
+		try {
+			chatLog.insertAfterEnd(chatLog.getDefaultRootElement(), insert);
+		} catch (Exception e) {
+			System.err.println(e);
+		}
 	}
 	
 	public void setMyColor(Color c) {
@@ -112,7 +119,7 @@ public class SessionController implements ConnectionObserver {
 	
 	public void disconnect() {
 		// TODO: Implement
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
 	}
 	
 	/* Renamed from UML: getHTMLDocument to getChatLog */
