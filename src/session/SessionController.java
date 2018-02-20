@@ -61,10 +61,25 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public Request getRequest(String user, int id) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		User u = stringToUser(user);
+		Request request;
+		for(Request r : u.myRequests) {
+			if (r.getID == id) {
+				request = r;
+			}
+		} else
+			// Request ID not correct
 	}
 	
+	/** 
+	 * Checks if the crypto is available for the user, and if so creates a new
+	 * OutgoingFileRequest object. If not, notifies that the crypto is
+	 * unavailable for the specified user.
+	 * @param user User receiving the request
+	 * @param file File to be sent
+	 * @param c CryptoType used
+	 * @param message Accompanying message to the request
+	 */
 	public void sendFileRequest(String user, File file, CryptoType c, 
 								String message) {
 		if (checkCryptoAvailable(user, c)) {
@@ -117,15 +132,13 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public void sendTextMessage(String message) {
-		// TODO: Implement
-		//throw new NotImplementedException();
 		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
 		String insert = openTag + message + "</p>";
 		writeToChatLog(insert);
 	}
 	
 	/**
-	 * sets user's color
+	 * sets color
 	 * @param c color
 	 */
 	public void setMyColor(Color c) {
@@ -162,8 +175,7 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	/**
-	 * Adds HTMl formatted text to the chat log if there is one. Creates a HTML
-	 * document if there is none already. Notifies observers that the log
+	 * Adds HTMl formatted text to the chat log. Notifies observers that the log
 	 * has been changed. 
 	 * @param message HTML formatted text containing the text message
 	 * @throws BadLocationException
@@ -221,7 +233,13 @@ public class SessionController implements ConnectionObserver {
 			}
 		}
 		return wantedUser;
-
+	}
+		
+		
+	/**
+	 * Adds a chatObserver to the sessionController
+	 * @param o ChatObserver being added
+	 */
 	public void addObserver(ChatObserver o) {
 		observers.add(o);
 	}
