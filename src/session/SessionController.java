@@ -19,7 +19,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
  */
 public class SessionController implements ConnectionObserver {
 	
-	private List<User> connectedUsers;
+	protected List<User> connectedUsers;
 	private List<ChatObserver> observers;
 	private String myUsername;
 	private Color myColor;
