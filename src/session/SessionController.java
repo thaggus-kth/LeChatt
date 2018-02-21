@@ -45,14 +45,25 @@ public class SessionController implements ConnectionObserver {
 		this.myColor = myColor;
 	}
 	
+	/**
+	 * Takes a Message object, extracts the XML formatted 
+	 * message and adds it to the chatlog. 
+	 */
 	public void newMessage(Message msg) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		String message = msg.getMessage();
+		writeToChatLog(message);
 	}
 	
+	/**
+	 * Adds a request link to the chatlog.The link ID is on the form
+	 * user_sending_the_request:request_ID 
+	 */
 	public void newRequest(Request rIn) {
-		// TODO: Implement
-		throw new NotImplementedException();
+		String userAndID = "\"" + rIn.getUsername() + ":" + rIn.getID() + "\"";
+		String openTag = "<a href =" + userAndID + 
+				"title = \"Get information about request\"" + ">";
+		String insert = openTag + "New Request!" + "</a>";
+		writeToChatLog(insert);
 	}
 	
 	public void newNotification(Message msg) {
