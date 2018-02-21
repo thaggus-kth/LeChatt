@@ -13,11 +13,11 @@ public abstract class Request implements java.awt.event.ActionListener {
 	private int myID;
 	private Timer timeOutTimer;
 	/**
-	 * Lifetime of the event in miliseconds.
+	 * Lifetime of the event in milliseconds.
 	 */
 	//For visibility reasons the following must be located in the subclasses.
 	protected User myUser;
-	//private String myMessage;
+	private String myMessage;
 	/**
 	 * HTML Element in the chat log. Some requests want to modify this
 	 * according to what happens with them. If so they are given an element
@@ -26,7 +26,8 @@ public abstract class Request implements java.awt.event.ActionListener {
 	//private Element myElement;
 	
 	
-	public Request(User user) {
+	public Request(User user, String message) {
+		myMessage = message;
 		myUser = user;
 		myID = nextID++;
 		timeOutTimer = new Timer(DEFAULT_LIFETIME, this);
@@ -46,6 +47,10 @@ public abstract class Request implements java.awt.event.ActionListener {
 	 */
 	public String getUsername() {
 		return myUser.username;
+	}
+	
+	public String getMessage() {
+		return myMessage;
 	}
 	
 	/**

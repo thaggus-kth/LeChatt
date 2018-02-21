@@ -24,7 +24,16 @@ public class SessionController implements ConnectionObserver {
 	private String myUsername;
 	private Color myColor;
 	private HTMLDocument chatLog;
-
+	
+	/**
+	 * Constructor for client controller.
+	 * Creates a server User
+	 * @param myUsername
+	 * @param myColor
+	 * @param ipToConnectTo
+	 * @param port
+	 * @param connectionGreeting
+	 */
 	public SessionController(String myUsername, Color myColor,
 			String ipToConnectTo, int port, String connectionGreeting) {
 		this.myUsername = myUsername;
@@ -36,8 +45,10 @@ public class SessionController implements ConnectionObserver {
 		HTMLEditorKit kit = new HTMLEditorKit();
 		chatLog = (HTMLDocument) kit.createDefaultDocument();
 		writeToChatLog("<p>Welcome to LeChatt!</p>");
-		//TODO: Create a user object & attempt connecting to the
-		//		server
+		
+		User serverUser = new User(ipToConnectTo, port);
+		connectedUsers.add(serverUser);
+		Request connectionRequest = new OutgoingConnectionRequest(serverUser, connectionGreeting);		
 	}
 	
 	protected SessionController(String myUsername, Color myColor) {
@@ -65,11 +76,13 @@ public class SessionController implements ConnectionObserver {
 		String insert = openTag + "New Request!" + "</a>";
 		writeToChatLog(insert);
 	}
-	
-	public void newNotification(Message msg) {
-		// TODO: Implement
-		throw new NotImplementedException();
-	}
+//	
+//	public void newRequestReply(Message msg) {
+//		String reply = msg.getMessage();
+//		writeToChatLog(reply);
+//		// TODO: Implement
+//		throw new NotImplementedException();
+//	}
 	
 	public Request getRequest(String user, int id) {
 		User u = stringToUser(user);
