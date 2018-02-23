@@ -7,5 +7,10 @@ package session;
  *
  */
 public abstract class ConnectionRequest extends Request {
+
+	public ConnectionRequest(User user, String message) {
+		super(user, message);
+	}
+	
 	/* Class intentionally left blank */
 }

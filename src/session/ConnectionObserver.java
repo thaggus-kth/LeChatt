@@ -6,7 +6,8 @@ package session;
  * @author thaggus
  *
  */
-public interface ConnectionObserver {
+//To think about: should User and ConnectionObserver be package private?
+interface ConnectionObserver {
 	
 	public void newMessage(Message m);
 	
@@ -17,7 +18,8 @@ public interface ConnectionObserver {
 	 * information (e.g. the user responded to a key request). If
 	 * the observer has a chat log, this method should write the
 	 * message to the chat log. If not, this call should be ignored.
+	 * @param source - the source user.
 	 * @param message - the message to be written to the log.
 	 */
-	public void newNotification(Message m);
+	public void newNotification(User source, String message);
 }

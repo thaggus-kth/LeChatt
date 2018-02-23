@@ -224,6 +224,7 @@ public class SessionController implements ConnectionObserver {
 	public void kickUser(String username) {
 		User kickMe = stringToUser(username);
 		kickMe.disconnect();
+		connectedUsers.remove(kickMe);
 		notifyObservers();
 	}
 	

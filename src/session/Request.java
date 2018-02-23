@@ -12,12 +12,9 @@ public abstract class Request implements java.awt.event.ActionListener {
 	private static int nextID = 1;
 	private int myID;
 	private Timer timeOutTimer;
-	/**
-	 * Lifetime of the event in milliseconds.
-	 */
-	//For visibility reasons the following must be located in the subclasses.
-	protected User myUser;
+	private User myUser;
 	private String myMessage;
+	private Element myElement;
 	/**
 	 * HTML Element in the chat log. Some requests want to modify this
 	 * according to what happens with them. If so they are given an element
@@ -49,18 +46,49 @@ public abstract class Request implements java.awt.event.ActionListener {
 		return myUser.username;
 	}
 	
+	/**
+	 * Grants access to the User object for subclasses.
+	 * @return
+	 */
+	protected User getUser() {
+		return myUser;
+	}
+	
 	public String getMessage() {
 		return myMessage;
 	}
 	
 	/**
-	 * Performs neccessary steps to accept the request.
+	 * For use by SessionController to assign a HTML Element to this request.
+	 * When the request is accepted or denied the element is modified
+	 * by the request object.
+	 * @param e - the element to be associated with this request.
+	 */
+	void setHTMLElement(Element e) {
+		myElement = e;
+	}
+	
+	/**
+	 * Grants access to the HTML Element object for subclasses.
+	 * @param e
+	 * @return
+	 */
+	protected Element getMyElement() {
+		return myElement;
+	}
+	
+	/**
+	 * Performs neccessary steps to accept the request. When
+	 * this method is done, the Request should remove itself
+	 * from its User's myRequests list.
 	 * @param message User's response message to remote party.
 	 */
 	public abstract void accept(String message);
 	
 	/**
-	 * Performs neccessary steps to deny the request.
+	 * Performs neccessary steps to deny the request. When
+	 * this method is done, the Request should remove itself
+	 * from its User's myRequests list.
 	 * @param message User's response message to remote party.
 	 */
 	public abstract void deny(String message);
@@ -68,7 +96,9 @@ public abstract class Request implements java.awt.event.ActionListener {
 	/**
 	 * This method is called by the internal timer when the request
 	 * exceeds its lifetime. Implementations of the method should
-	 * make a call to deny() along with disabling the accept() method. 
+	 * make a call to deny() along with disabling the accept() method.
+	 * Additionally the Request instance should remove itself from
+	 * the myRequests list of the User.
 	 */
 	protected abstract void timeOut();
 	//TODO: we should probably make a timeOutListener interface so the popup
