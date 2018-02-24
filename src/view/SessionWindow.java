@@ -117,7 +117,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 			//TODO: get neccessary info. probably we want to use a whole JFrame for this, and put the
 			// file chooser button in it (similar to the lobby window)
 			String serverUser = mySession.getUsernameList().get(0);
-			mySession.sendFileRequest(serverUser, fileChooser.getSelectedFile(), c, message);
+			//mySession.sendFileRequest(serverUser, fileChooser.getSelectedFile(), c, message);
 		}
 	}
 	

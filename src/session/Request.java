@@ -104,6 +104,11 @@ public abstract class Request implements java.awt.event.ActionListener {
 	//TODO: we should probably make a timeOutListener interface so the popup
 	//windows can display an error message if the request times out.
 	
+	/* TODO: add a kill() method which disables the request silently.
+	 * this method will be used when we lose connection to a User, in
+	 * order to disable the GUI or someone else from accepting the Request.
+	 */
+	
 	public void actionPerformed(ActionEvent e) {
 		timeOut();
 	}

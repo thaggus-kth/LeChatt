@@ -31,6 +31,19 @@ public class Server extends SessionController implements Runnable {
 		}
 	}
 	
+	@Override
+	/**
+	 * Distributes the message to all connected users and adds it to ChatLog.
+	 */
+	public void newMessage(Message m) {
+		for (User u : connectedUsers) {
+			if (u != m.getSource()) {
+				u.sendMessage(m);
+			}
+		}
+		super.newMessage(m);
+	}
+	
 	/**
 	 * Request class for incoming connections.
 	 * @author thaggus

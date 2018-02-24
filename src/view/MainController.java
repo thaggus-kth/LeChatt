@@ -31,7 +31,7 @@ public final class MainController {
 
 	public static void newServerSession(String username, int port,
 														Color color) {
-		
+		//TODO: implementera
 	}
 	
 

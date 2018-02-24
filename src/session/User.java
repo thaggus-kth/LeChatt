@@ -15,9 +15,11 @@ public class User implements Runnable {
 	private boolean connected = false;
 	ArrayList<Request> myRequests;
 	ArrayList<Crypto> myCryptos;
-	/** The username of the remote user or server. Note that attempts
+	/** The username of the remote user or remote server. Note that attempts
 	 * to change username by the remote party are ignored. */
-	String username; //TODO: this field should be made private, and a getUsername method should be added.
+	private String username; //TODO: this field should be made private, and a getUsername method should be added.
+	/** The username of the local user.  */
+	private String defaultSender;
 	private Crypto activeCrypto;
 	private ArrayList<ConnectionObserver> observers;
 	/* PrintWriter replaced by XMLStreamWriter, which
@@ -39,6 +41,7 @@ public class User implements Runnable {
 	 */
 	public User(Socket mySocket, Server myServer) {
 		Thread th = new Thread(this);
+		defaultSender = myServer.getMyUsername();
 		connection = mySocket;
 		myRequests.add(myServer.new IncomingConnectionRequest(this));
 		th.start();
@@ -48,11 +51,14 @@ public class User implements Runnable {
 	 * This constructor is used by the client SessionController to create
 	 * a user representing a remote server.
 	 * To connect, call sendConnectRequest after construction.
-	 * @param hostAddress
-	 * @param port
+	 * @param hostAddress the IP address to connect to.
+	 * @param port the port to connect to.
+	 * @param ourUsername the username of the local user (which will be
+	 * displayed to the remote users)
 	 */
-	public User(String hostAddress, int port) {
+	public User(String hostAddress, int port, String ourUsername) {
 		Thread th = new Thread(this);
+		defaultSender = ourUsername;
 		try {
             connection = new Socket(hostAddress, port);
             //out = new PrintWriter(connection.getOutputStream(), true);
@@ -66,6 +72,252 @@ public class User implements Runnable {
         } catch (IOException | XMLStreamException e) {
         	System.err.println(e);
         }
+	}
+	
+	/**
+	 * Sends a Message object to the remote user.
+	 * @param toSend the message to send.
+	 */
+	public void sendMessage(Message toSend) {
+		try {
+			xmlOutputMessageHeader(toSend.getSendersName());
+			xmlOut.writeStartElement("text");
+			xmlOut.writeAttribute("color", SessionController.
+					colorToHex(toSend.getColor()));
+			if (activeCrypto != null) {
+				xmlOut.writeStartElement("encrypted");
+				//TODO: Implement encryption
+			} else {
+				xmlOut.writeCharacters(toSend.getMessage());
+			}
+			xmlOut.writeEndElement();
+			
+		} catch (XMLStreamException e) {
+			if (e.getCause() instanceof IOException) {
+				lostConnection();
+			} else {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * sends XML formatted message over the internet. Note that this
+	 * should only be used by Requests or other actors which need to
+	 * write special xml tags: text messages and disconnect
+	 * messages are handled via sendMessage() and disconnect().
+	 * @param xmlFormattedMessage The xml element to be transmitted to
+	 * remote user, ex. <keyrequest type="xxx">message here</keyrequest>
+	 * 
+	 */
+	public void writeLine(String xmlFormattedMessage) {
+		try {
+			xmlOutputMessageHeader(defaultSender);
+			StringReader sr = new StringReader(xmlFormattedMessage);
+			XMLStreamReader xmlReader = myXMLReaderFactory.
+					createXMLStreamReader(sr);
+			while (xmlReader.hasNext()) {
+				switch (xmlReader.next()) {
+				case XMLStreamConstants.START_ELEMENT:
+					xmlOut.writeStartElement(xmlReader.getLocalName());
+					for (int i = 0; i < xmlReader.getAttributeCount(); i++) {
+						xmlOut.writeAttribute(
+								xmlReader.getAttributeLocalName(i),
+								xmlReader.getAttributeValue(i));
+					}
+					break;
+				case XMLStreamConstants.CHARACTERS:
+					xmlOut.writeCharacters(xmlReader.getText());
+					break;
+				case XMLStreamConstants.END_ELEMENT:
+					xmlOut.writeEndElement();
+					break;
+				}
+			}
+			xmlOut.writeEndDocument();
+		} catch (XMLStreamException e) {
+			if (e.getCause() instanceof IOException) {
+				lostConnection();
+			} else {
+				/* Ending up here probably means the inputted XML was not well
+				 * formed. If we were writing more professional code we should
+				 * probably throw an exception at this point, like
+				 * IllegalArgumentException.
+				 */
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * This method writes the opening tags of any message.
+	 * TODO: maybe subclass the XMLStreamWriter and make this a class method?
+	 * @throws XMLStreamException
+	 */
+	private void xmlOutputMessageHeader(String sender) throws XMLStreamException {
+		xmlOut.writeStartDocument("UTF-8", "1.0");
+		xmlOut.writeStartElement("message");
+		xmlOut.writeAttribute("sender", sender);
+	}
+	
+	/**
+	 * Closes the connection to the user. Sends a disconnect message if
+	 * neccessary.
+	 */
+	public void disconnect() {
+		if (connected) {
+			try {
+				xmlOutputMessageHeader(defaultSender);
+				xmlOut.writeEmptyElement("disconnect");
+				xmlOut.writeEndDocument();
+			} catch (XMLStreamException e) {
+				/* at this point we don't care about
+				 * errors, so just ignore them
+				 */
+			}
+		}
+		try {
+			xmlOut.close();
+		} catch (XMLStreamException e) {
+			/* i don't care about your exceptions */
+		}
+		if (!connection.isClosed()) {
+			try {
+				connection.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		connected = false;
+		//TODO: kill all requests in myRequest.
+	}
+	
+	public void run() {
+		/* Parse the temporary connection messages. */
+		try {
+			boolean keepTemporaryConnection = true;
+			while (keepTemporaryConnection) {
+				XMLStreamReader xmlReader = myXMLReaderFactory.
+						createXMLStreamReader(in);
+				boolean msgDone = false;
+				while (!msgDone) {
+					switch (xmlReader.next()) {
+					case XMLStreamConstants.START_ELEMENT:
+						switch (xmlReader.getLocalName()) {
+						case "message":
+							if (username == null || username.isEmpty()) {
+								/* Since we don't know the username of this user,
+								 * we want to record it.
+								 */
+								username = xmlReader.
+										getAttributeValue(null, "sender");
+							}
+							break;
+						case "request":
+							/* ConnectionRequest tag. */
+							if (xmlReader.getAttributeCount() > 0) {
+								/* There is a reply attribute, so
+								 * this is a reply.
+								 */
+								String reply = xmlReader.getAttributeValue(
+										null, "reply");
+								for (Request r : myRequests) {
+									if (r instanceof 
+											OutgoingConnectionRequest) {
+										//TODO: this may need to be revised once
+										// OutgoingConnectionRequest is implemented.
+										switch (reply.toLowerCase()) {
+										case "yes":
+											r.accept(null);
+											break;
+										case "no":
+											r.deny(null);
+											break;
+										}
+									}
+								}
+							} else {
+								/* This is an incoming connection request. */
+								for (Request r : myRequests) {
+									if (r instanceof Server.
+											IncomingConnectionRequest) {
+										((Server.IncomingConnectionRequest) r).
+										setMessage(xmlReader.getElementText());
+										fireNewRequestEvent(r);
+										break;
+									}
+								}
+							}
+							break;
+						case "disconnect":
+							keepTemporaryConnection = false;
+							String msg = "User ";
+							if (username != null && !username.isEmpty()) {
+								msg += username + '@';
+							}
+							msg +=  connection.getInetAddress() +
+									" disconnected.";
+							fireUserNotificationEvent(msg);
+							disconnect();
+							break;
+						case "text":
+							boolean primitiveUser = true;
+							for (Request r : myRequests) {
+								if (r instanceof Server.
+										IncomingConnectionRequest) {
+									/* The other user is just being eager and
+									 * writes things before we accepted their connection.
+									 * TODO: save these messages in a buffer and output them
+									 * when the connection has been accepted.
+									 */
+									primitiveUser = false;
+								} else if (r instanceof
+										OutgoingConnectionRequest) {
+									/* We might be dealing with a more primitive user.
+									 * ... or the other party might be eager. But assume
+									 * the worst. */
+									//TODO: notify the GUI that we might be connecting
+									// to a primitive server and ask if its ok.
+								}
+							}
+							if (primitiveUser) {
+								//TODO: notify the GUI that the user who is trying
+								//to connect is primitive and ask if we should allow it.
+							}
+							
+						}
+					case XMLStreamConstants.END_ELEMENT:
+						if (xmlReader.getLocalName() == "message") {
+							msgDone = true;
+							/* this behavior (recreating the XMLStreamReader
+							 * for each <message>-tag) is needed to avoid the
+							 * XML parser complaining about XML documents not
+							 * being well-formed.
+							 */
+						}
+						break;
+					case XMLStreamConstants.END_DOCUMENT: //for robustness
+						msgDone = true;
+						break;
+					}
+				}
+			}
+		} catch (XMLStreamException e) {
+			if (e.getCause() instanceof IOException) {
+				/* This means that the Socket stream was closed. */
+				lostConnection();
+			} else {
+				/* We recieved XML which was not well-formed. */
+				e.printStackTrace(); //remove this when next line is implemented.
+				//TODO: notify the user that we recieved a broken message.
+			}
+		}
+		if (connected) {
+			/* connected is set true by accepting ConnectionRequest. */
+			pumpMessages();
+		}
+		disconnect();
 	}
 	
 	/**
@@ -101,22 +353,23 @@ public class User implements Runnable {
 			Message toMessage(User source) {
 				String message = messageBuilder.toString();
 				Message newMessage;
-				Color cOut = Color.black;//TODO: convert hexColor to a Color
-				if (ct == null) {
+				Color cOut = Color.decode(hexColor);
+// These lines commented out until we know that they can be removed safely.
+//				if (ct == null) {
+// The next line should never be commented out.
 					newMessage = new Message(source, sender, message, cOut);
-				}
-				else {
-					newMessage = new Message(source, sender, message, cOut,
-							ct);
-				}
+//				}
+//				else {
+//					newMessage = new Message(source, sender, message, cOut,
+//							ct);
+//				}
 				return newMessage;
 			}
 		}
 		
 		/* Begin XML parsing section. */
-		boolean shouldStop = false;
-		try {
-			while (!shouldStop) {
+		while (connected) {
+			try {
 			    XMLStreamReader xmlReader = 
 			    		myXMLReaderFactory.createXMLStreamReader(in);
 			    boolean messageEnded = false;
@@ -131,22 +384,26 @@ public class User implements Runnable {
 			    	case XMLStreamConstants.START_ELEMENT:
 			    		switch (xmlReader.getLocalName()) {
 			    		case "message":
-			    			mb.sender = xmlReader.getAttributeValue(null, "sender");
+			    			mb.sender = xmlReader.getAttributeValue(null, 
+			    					"sender");
 			    			break;
 			    		case "text":
-			    			mb.hexColor = xmlReader.getAttributeValue(null, "color");
+			    			mb.hexColor = xmlReader.getAttributeValue(null,
+			    					"color");
 			    			mb.messageBuilder.append(xmlReader.getElementText());
 			    			//TODO: getElementText() will throw an exception if there
 			    			// are sub-tags to <text>, like <fetstil>, so we need to
 			    			// think of a better way to do this.
 			    			break;
 			    		case "disconnect":
-			    			shouldStop = true;
-			    			fireUserNotificationEvent(username + " disconnected.");
+			    			fireUserNotificationEvent(username 
+			    					+ " disconnected.");
+			    			disconnect();
 			    			break;
 			    		case "keyrequest":
 			    		case "filerequest":
-			    			System.err.println("Got unimplemented request from " + username);
+			    			System.err.println("Got unimplemented request "
+			    					+ "from " + username);
 			    			//TODO (long term): implement.
 			    			break;
 			    		}
@@ -172,156 +429,15 @@ public class User implements Runnable {
 			    		break;
 			    	}
 			    }
-			}
-		} catch (XMLStreamException e) {
-			if (e.getCause() instanceof IOException) {
-				/* This means that the Socket stream was closed. */
-				//TODO: write information to user about other user disconnecting.
-			}
-		}
-	}
-	
-	public void run() {
-		
-		/* Parse the temporary connection messages. */
-		try {
-			boolean keepTemporaryConnection = true;
-			while (keepTemporaryConnection) {
-				XMLStreamReader xmlReader = myXMLReaderFactory.createXMLStreamReader(in);
-				boolean msgDone = false;
-				while (!msgDone) {
-					switch (xmlReader.next()) {
-					case XMLStreamConstants.START_ELEMENT:
-						switch (xmlReader.getLocalName()) {
-						case "message":
-							if (username == null || username.isEmpty()) {
-								/* Since we don't know the username of this user,
-								 * we want to record it.
-								 */
-								username = xmlReader.getAttributeValue(null, "sender");
-							}
-							break;
-						case "request":
-							/* ConnectionRequest tag. */
-							if (xmlReader.getAttributeCount() > 0) {
-								/* There is a reply attribute, so
-								 * this is a reply.
-								 */
-								String reply = xmlReader.getAttributeValue(null, "reply");
-								for (Request r : myRequests) {
-									if (r instanceof OutgoingConnectionRequest) {
-										//TODO: this may need to be revised once
-										// OutgoingConnectionRequest is implemented.
-										switch (reply.toLowerCase()) {
-										case "yes":
-											r.accept(null);
-											break;
-										case "no":
-											r.deny(null);
-											break;
-										}
-									}
-								}
-							} else {
-								/* This is an incoming connection request. */
-								for (Request r : myRequests) {
-									if (r instanceof Server.IncomingConnectionRequest) {
-										r = (Server.IncomingConnectionRequest) r;
-										String message = xmlReader.getElementText();
-										fireNewRequestEvent(r);
-										break;
-									}
-								}
-							}
-							break;
-						case "disconnect":
-							keepTemporaryConnection = false;
-							//TODO: fireUserNotificationEvent(); - notify the user of the disconnect
-							break;
-						}
-					case XMLStreamConstants.END_ELEMENT:
-						if (xmlReader.getLocalName() == "message") {
-							msgDone = true;
-							/* this behavior (recreating the XMLStreamReader
-							 * for each <message>-tag) is needed to avoid the
-							 * XML parser complaining about XML documents not
-							 * being well-formed.
-							 */
-						}
-						break;
-					case XMLStreamConstants.END_DOCUMENT: //for robustness
-						msgDone = true;
-						break;
-					}
-				}
-			}
-		} catch (XMLStreamException e) {
-			if (e.getCause() instanceof IOException) {
-				/* This means that the Socket stream was closed. */
-				//TODO: write information to user about other user disconnecting.
-				//Note that we have the same case in pumpMessages, so make a small method for this.
-			}
-		}
-		if (connected) {
-			/* The connected boolean is set by the Request objects. */
-			pumpMessages();
-		}
-		disconnect();
-	}
-	
-	/**
-	 * sends XML formatted message over the internet.
-	 * @param xmlFormattedMessage
-	 */
-	public void writeLine(String xmlFormattedMessage) {
-		try {
-			xmlOutputMessageHeader();
-			//TODO: parse xmlFormattedMessage and write it exactly
-			//as is via xmlOut. Should we keep this method?
-			xmlOut.writeEndDocument();
-		} catch (XMLStreamException e) {
-			e.printStackTrace();//make error msg
-		}
-	}
-	
-	/**
-	 * This method writes the opening tags of any message.
-	 * TODO: maybe subclass the XMLStreamWriter and make this a class method?
-	 * @throws XMLStreamException
-	 */
-	private void xmlOutputMessageHeader() throws XMLStreamException {
-		xmlOut.writeStartDocument("UTF-8", "1.0");
-		xmlOut.writeStartElement("message");
-		xmlOut.writeAttribute("sender", username);
-	}
-	
-	/**
-	 * Closes the connection to the user. Sends a disconnect message if
-	 * neccessary.
-	 */
-	public void disconnect() {
-		if (connected) {
-			try {
-				xmlOutputMessageHeader();
-				xmlOut.writeEmptyElement("disconnect");
-				xmlOut.writeEndDocument();
 			} catch (XMLStreamException e) {
-				/* at this point we don't care about
-				 * errors, so just ignore them
-				 */
-			}
-		}
-		try {
-			xmlOut.close();
-		} catch (XMLStreamException e) {
-			/* i don't care about your exceptions */
-		}
-		if (!connection.isClosed()) {
-			try {
-				connection.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				if (e.getCause() instanceof IOException) {
+					/* This means that the Socket stream was closed. */
+					lostConnection();
+				} else {
+					/* We recieved a broken XML message (most likely) */
+					e.printStackTrace(); //remove when the next line is realized.
+					//TODO: notify user that we recieved a broken xml message.
+				}
 			}
 		}
 	}
@@ -371,8 +487,8 @@ public class User implements Runnable {
 		Request connectRequest = new OutgoingConnectionRequest(message, this);
 		myRequests.add(connectRequest);
 		/* This request does not need to be fired. */
-		try{
-			xmlOutputMessageHeader();
+		try {
+			xmlOutputMessageHeader(defaultSender);
 			xmlOut.writeStartElement("request");
 			xmlOut.writeCharacters(message);
 			xmlOut.writeEndDocument();
@@ -395,8 +511,9 @@ public class User implements Runnable {
 		@Override
 		public void accept(String message) {
 			connected = true;
-			getMyElement();
-			//TODO: modify myElement
+			fireUserNotificationEvent(username + "@" +
+					connection.getInetAddress() + " accepted our connection" + 
+					" request. You can now chat!");
 			getUser().myRequests.remove(this);
 		}
 	
@@ -422,8 +539,8 @@ public class User implements Runnable {
 	
 		@Override
 		protected void timeOut() {
-			fireUserNotificationEvent("Connection request to " + connection.getInetAddress() +
-					" timed out.");
+			fireUserNotificationEvent("Connection request to " +
+								connection.getInetAddress() + " timed out.");
 			getUser().myRequests.remove(this);
 			disconnect();
 		}
@@ -434,6 +551,30 @@ public class User implements Runnable {
 		for (ConnectionObserver o : observers) {
 			o.newNotification(this, message);
 		}
+	}
+	
+	/**
+	 * Gets the remote user's name. Note that for newly connected users the
+	 * username might not be known.
+	 * @return remote user's name if known, empty string otherwise.
+	 */
+	public String getUsername() {
+		return username != null ? username : "";
+	}
+	
+	/**
+	 * This method is for calling when IOExceptions were caught, since
+	 * they mean that we lost the connection to the remote party unexpectedly.
+	 */
+	private void lostConnection() {
+		String name;
+		if (username == null || username.isEmpty()) {
+			name = connection.getInetAddress().toString();
+		} else {
+			name = username;
+		}
+		fireUserNotificationEvent("Lost connection to " + name + ".");
+		disconnect();
 	}
 
 }

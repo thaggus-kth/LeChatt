@@ -8,6 +8,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.*;
 
+import crypto.Crypto;
+import crypto.CryptoType;
 // Remove the next line once all methods are implemented
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -38,7 +40,6 @@ public class SessionController implements ConnectionObserver {
 			String ipToConnectTo, int port, String connectionGreeting) {
 		this.myUsername = myUsername;
 		this.myColor = myColor;
-		//chatLog = new HTMLDocument();
 		connectedUsers = new ArrayList<User>();
 		observers = new ArrayList<ChatObserver>();
 		
@@ -46,9 +47,8 @@ public class SessionController implements ConnectionObserver {
 		chatLog = (HTMLDocument) kit.createDefaultDocument();
 		writeToChatLog("<p>Welcome to LeChatt!</p>");
 		
-		User serverUser = new User(ipToConnectTo, port);
+		User serverUser = new User(ipToConnectTo, port, this.myUsername);
 		connectedUsers.add(serverUser);
-		Request connectionRequest = new OutgoingConnectionRequest(serverUser, connectionGreeting);		
 	}
 	
 	protected SessionController(String myUsername, Color myColor) {
@@ -60,22 +60,34 @@ public class SessionController implements ConnectionObserver {
 	 * Takes a Message object, extracts the XML formatted 
 	 * message and adds it to the chatlog. 
 	 */
+	@Override
 	public void newMessage(Message msg) {
-		String message = msg.getMessage();
-		writeToChatLog(message);
+		String htmlEscapedMessage = escapeHTML(msg.getMessage());
+		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
+		writeToChatLog(openTag + htmlEscapedMessage + "</p>");
 	}
 	
 	/**
 	 * Adds a request link to the chatlog.The link ID is on the form
 	 * user_sending_the_request:request_ID 
 	 */
+	@Override
 	public void newRequest(Request rIn) {
+		//TODO (long term): make this more informative
+		// maybe the Requests could write their own element texts
+		// if the sessioncontroller passes them an Element?
 		String userAndID = "\"" + rIn.getUsername() + ":" + rIn.getID() + "\"";
 		String openTag = "<a href =" + userAndID + 
 				"title = \"Get information about request\"" + ">";
 		String insert = openTag + "New Request!" + "</a>";
 		writeToChatLog(insert);
 	}
+	
+	@Override
+	public void newNotification(User u, String s) {
+		writeToChatLog(s);
+		notifyObservers();
+	}		
 //	
 //	public void newRequestReply(Message msg) {
 //		String reply = msg.getMessage();
@@ -156,6 +168,7 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public void sendTextMessage(String message) {
+		//TODO: make this actually send things to the Users
 		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
 		String insert = openTag + message + "</p>";
 		writeToChatLog(insert);
@@ -185,7 +198,7 @@ public class SessionController implements ConnectionObserver {
 	public ArrayList<String> getUsernameList() {
 		ArrayList<String> UsernameList = new ArrayList<String>();
 		for( User u : connectedUsers) {
-			UsernameList.add(u.username);
+			UsernameList.add(u.getUsername());
 		}
 		return UsernameList;
 	}
@@ -205,15 +218,15 @@ public class SessionController implements ConnectionObserver {
 	 * @throws BadLocationException
 	 * @throws IOException
 	 */
-	void writeToChatLog(String message) {
+	void writeToChatLog(String htmlFormattedMessage) {
 		try {
-			chatLog.insertBeforeEnd(chatLog.getDefaultRootElement(), message);
+			chatLog.insertBeforeEnd(chatLog.getDefaultRootElement(),
+					htmlFormattedMessage);
 		} catch (BadLocationException e) {
 			System.err.println(e);
 		} catch (IOException e) {
 			System.err.print(e);
 		}
-		System.out.print(message);
 		notifyObservers();
 	}
 	
@@ -253,7 +266,7 @@ public class SessionController implements ConnectionObserver {
 	private User stringToUser(String strUsername) {
 		User wantedUser;
 		for(User u : connectedUsers) {
-			if (u.username == strUsername) {
+			if (u.getUsername() == strUsername) {
 				wantedUser = u;
 			}
 		}
@@ -270,6 +283,14 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	/**
+	 * Gets username of local user.
+	 * @return username of local user.
+	 */
+	public String getMyUsername() {
+		return myUsername;
+	}
+	
+	/**
 	 * Based on https://stackoverflow.com/questions/3607858/convert-a-rgb-color-value-to-a-hexadecimal
 	 * @param c the Color to convert
 	 * @return String containing the hex representation of the color
@@ -279,5 +300,27 @@ public class SessionController implements ConnectionObserver {
 									c.getBlue());
 		return hex;
 
+	}
+	
+	/**
+	 * Not original work! Credit Bruno Eberhard.
+	 * TODO: är det ok att vi tar hans lösning? kolla med assarna.
+	 * From https://stackoverflow.com/questions/1265282/recommended-method-for-escaping-html-in-java.
+	 * @param s
+	 * @return
+	 */
+	public static String escapeHTML(String s) {
+	    StringBuilder out = new StringBuilder(Math.max(16, s.length()));
+	    for (int i = 0; i < s.length(); i++) {
+	        char c = s.charAt(i);
+	        if (c > 127 || c == '"' || c == '<' || c == '>' || c == '&') {
+	            out.append("&#");
+	            out.append((int) c);
+	            out.append(';');
+	        } else {
+	            out.append(c);
+	        }
+	    }
+	    return out.toString();
 	}
 }

@@ -20,6 +20,12 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		SERVER;
 	}
 	
+	/**
+	 * A small subclass of Exception to keep track of attemptStart not
+	 * having enough information to start.
+	 * @author thaggus
+	 *
+	 */
 	private class MyException extends Exception {
 		MyException(String s) {
 			super(s);
@@ -128,18 +134,19 @@ public class LobbyWindow extends JFrame implements ActionListener {
 			 */
 		}
 		if (ip.isEmpty()) {
-			// throw something
+			//TODO: make this check if the Server button is selected or not
 			throw new MyException("Please enter an ip.");
 		}
 		if (selectedColor == null) {
 			throw new MyException("Please select a color");
 		}
-		String greeting = "hej"; //TODO: collect from user
+		String greeting = "hej"; //TODO (long term): collect from user
+		//TODO: start a client or server session depending on which button
+		//is selected
 		MainController.newClientSession(name, ip, port, selectedColor,
 				greeting);
-		/* Create session controller */
-		/* Create window */
-		/* dispose */
+		
+		/* Hide this window */
 		dispose();
 	}
 	
