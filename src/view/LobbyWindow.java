@@ -141,10 +141,18 @@ public class LobbyWindow extends JFrame implements ActionListener {
 			throw new MyException("Please select a color");
 		}
 		String greeting = "hej"; //TODO (long term): collect from user
-		//TODO: start a client or server session depending on which button
-		//is selected
-		MainController.newClientSession(name, ip, port, selectedColor,
-				greeting);
+		
+		switch (mode) {
+		case CLIENT :
+			MainController.newClientSession(name, ip, port, selectedColor,
+					greeting);
+		case SERVER :
+			MainController.newServerSession(name, port, selectedColor);
+		}
+
+		
+		
+		
 		
 		/* Hide this window */
 		dispose();

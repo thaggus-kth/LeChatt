@@ -1,7 +1,7 @@
 package view;
 
 import java.awt.Color;
-
+import session.Server;
 import session.SessionController;
 
 public final class MainController {
@@ -31,7 +31,8 @@ public final class MainController {
 
 	public static void newServerSession(String username, int port,
 														Color color) {
-		//TODO: implementera
+		Server serverController = new Server(username, color, port);
+		SessionWindow sw = new SessionWindow(serverController);
 	}
 	
 

@@ -11,13 +11,18 @@ import javax.xml.stream.XMLOutputFactory;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Server extends SessionController implements Runnable {
-
 	private ServerSocket serverSocket;
 	private boolean running = true;
 	
-	public Server(String myUsername, Color myColor) {
-		super(myUsername, myColor);
-		// TODO Implement
+	public Server(String myUsername, Color myColor, int port) {
+		super(myUsername, myColor, port);
+		Thread th = new Thread(this);
+		try {
+			serverSocket = new ServerSocket(port);
+			th.start();
+		} catch (IOException e) {
+			System.err.println(e);
+		}
 	}
 	
 	public void run() {

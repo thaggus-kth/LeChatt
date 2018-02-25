@@ -43,7 +43,7 @@ public abstract class Request implements java.awt.event.ActionListener {
 	 * @return username of myUser
 	 */
 	public String getUsername() {
-		return myUser.username;
+		return myUser.getUsername();
 	}
 	
 	/**

@@ -1,6 +1,8 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,7 +14,7 @@ import java.awt.event.KeyListener;
 import session.*;
 
 public class SessionWindow extends JFrame implements ChatObserver,
-												ActionListener, KeyListener {
+												ActionListener, KeyListener, HyperlinkListener {
 	
 	private SessionController mySession;
 	private JButton sendButton;
@@ -41,6 +43,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		view.setPreferredSize(new Dimension(600,400));
 		view.setEditable(false);
 		view.setContentType("text/html");
+		view.addHyperlinkListener(this);
 		add(view, BorderLayout.CENTER);
 		add(userInfo, BorderLayout.EAST);
 		southPanel.setLayout(new BorderLayout());
@@ -99,6 +102,12 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		default:
 			System.err.println("SessionWindow: unknown Action Command: "
 								+ e.getActionCommand());
+		}
+	}
+	
+	public void hyperlinkUpdate(HyperlinkEvent e) {
+		if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+			System.out.println("h");
 		}
 	}
 	

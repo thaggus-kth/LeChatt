@@ -51,7 +51,7 @@ public class SessionController implements ConnectionObserver {
 		connectedUsers.add(serverUser);
 	}
 	
-	protected SessionController(String myUsername, Color myColor) {
+	protected SessionController(String myUsername, Color myColor, int port) {
 		this.myUsername = myUsername;
 		this.myColor = myColor;
 	}
@@ -100,11 +100,12 @@ public class SessionController implements ConnectionObserver {
 		User u = stringToUser(user);
 		Request request;
 		for(Request r : u.myRequests) {
-			if (r.getID == id) {
+			if (r.getID() == id) {
 				request = r;
-			}
-		} else
+			} else {
 			// Request ID not correct
+			}
+		}
 	}
 	
 	/** 
@@ -168,10 +169,13 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public void sendTextMessage(String message) {
-		//TODO: make this actually send things to the Users
 		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
 		String insert = openTag + message + "</p>";
 		writeToChatLog(insert);
+		Message textMessage = new Message(myUsername, message, myColor);
+		for(User connectedUser : connectedUsers) {
+			connectedUser.sendMessage(textMessage);
+		}
 	}
 	
 	/**
