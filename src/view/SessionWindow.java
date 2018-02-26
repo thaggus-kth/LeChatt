@@ -107,7 +107,6 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-			System.out.println("h");
 		}
 	}
 	
