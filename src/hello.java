@@ -1,3 +1,4 @@
+import java.awt.Color;
 
 public class hello {
 
@@ -5,6 +6,7 @@ public class hello {
 		String h = "Hello world";
 		// TODO Auto-generated method stub
 		System.out.println(h);
+		Color.decode("#44ff00");
 	}
 	
 	public void thomasMethod(int i) {

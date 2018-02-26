@@ -12,7 +12,7 @@ import javax.xml.stream.events.*;
 public class XMLTest {
 	
 	static String xmlIn = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-			"<BookCatalogue xmlns=\"http://www.publishing.org\">\n" + 
+			"<BookCatalogue>\n" + 
 			"<Book>\n" + 
 			"    <Title>Yogasana Vijnana: the Science of Yoga</Title>\n" + 
 			"    <Author>Dhirendra Brahmachari</Author>\n" + 

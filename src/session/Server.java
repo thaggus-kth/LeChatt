@@ -15,7 +15,7 @@ public class Server extends SessionController implements Runnable {
 	private boolean running = true;
 	
 	public Server(String myUsername, Color myColor, int port) {
-		super(myUsername, myColor, port);
+		super(myUsername, myColor);
 		Thread th = new Thread(this);
 		try {
 			serverSocket = new ServerSocket(port);
@@ -49,6 +49,18 @@ public class Server extends SessionController implements Runnable {
 		super.newMessage(m);
 	}
 	
+	@Override
+	public void disconnect() {
+		super.disconnect();
+		try {
+			if (!serverSocket.isClosed()) {
+				serverSocket.close();
+			}
+		} catch (IOException e) {
+			System.err.println(e);
+		}
+	}
+	
 	/**
 	 * Request class for incoming connections.
 	 * @author thaggus
@@ -78,7 +90,8 @@ public class Server extends SessionController implements Runnable {
 		 */
 		@Override
 		public void accept(String message) {
-			//TODO: write XML request tag to the user.
+			String acceptTag = "<request reply=\"yes\">" + message + "<\request>";
+			getUser().writeLine(acceptTag);
 			connectedUsers.add(getUser());
 			notifyObservers();
 			getUser().myRequests.remove(this);
@@ -92,7 +105,8 @@ public class Server extends SessionController implements Runnable {
 		 */
 		@Override
 		public void deny(String message) {
-			//TODO: send the proper XML message to the user
+			String denyTag = "<request reply=\"no\">" + message + "<\request>";
+			getUser().writeLine(denyTag);
 			getUser().disconnect();
 			getUser().myRequests.remove(this);
 			//done
