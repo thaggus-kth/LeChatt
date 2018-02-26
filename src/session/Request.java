@@ -112,4 +112,24 @@ public abstract class Request implements java.awt.event.ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		timeOut();
 	}
+	
+	/**
+	 * This interface is provided for view components which display requests,
+	 * so that they can disable themselves if the request is timed out or
+	 * killed.
+	 * 
+	 * @author thaggus
+	 */
+	public static interface RequestObserver{
+		/**
+		 * This method should show a message indicating that the request timed
+		 * out, and disable the input methods of accepting the request.
+		 */
+		public void timedOut();
+		/**
+		 * This method should inform the user that the request was disabled due
+		 * to a connection problem.
+		 */
+		public void killed();
+	}
 }

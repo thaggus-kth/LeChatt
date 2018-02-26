@@ -15,7 +15,7 @@ public class Server extends SessionController implements Runnable {
 	private boolean running = true;
 	
 	public Server(String myUsername, Color myColor, int port) {
-		super(myUsername, myColor, port);
+		super(myUsername, myColor);
 		Thread th = new Thread(this);
 		try {
 			serverSocket = new ServerSocket(port);
@@ -47,6 +47,18 @@ public class Server extends SessionController implements Runnable {
 			}
 		}
 		super.newMessage(m);
+	}
+	
+	@Override
+	public void disconnect() {
+		super.disconnect();
+		try {
+			if (!serverSocket.isClosed()) {
+				serverSocket.close();
+			}
+		} catch (IOException e) {
+			System.err.println(e);
+		}
 	}
 	
 	/**

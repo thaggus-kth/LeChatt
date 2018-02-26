@@ -10,6 +10,9 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import session.*;
 
@@ -107,7 +110,36 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-			System.out.println("h");
+			if (e.getDescription().matches("request:[0-9]+")) {
+				/* This is a request */
+				int requestID = Integer.valueOf(e.getDescription().
+														split(":")[1]);
+				Request r = mySession.getRequest(requestID);
+				RequestPopupWindow popup = new RequestPopupWindow(this, r);
+				popup.setVisible(true);
+			} else if (e.getURL() != null) {
+				/* This is a web link. Open the system's browser */
+				URL clickedLink = e.getURL();
+				try {
+					boolean canBrowse = true;
+					if (Desktop.isDesktopSupported()) {
+						Desktop desktop = Desktop.getDesktop();
+						if (desktop.isSupported(Desktop.Action.BROWSE)) {
+							desktop.browse(clickedLink.toURI());
+						} else {
+							canBrowse = false;
+						}
+					} else {
+						canBrowse = false;
+					}
+					if (!canBrowse) {
+						//TODO: show error dialog
+						System.out.println("Could not open your web browser.");
+					}
+				} catch (IOException | URISyntaxException e1) {
+					//TODO: show error dialog
+				}	
+			}
 		}
 	}
 	

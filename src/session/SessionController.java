@@ -1,6 +1,7 @@
 package session;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,8 @@ public class SessionController implements ConnectionObserver {
 	
 	/**
 	 * Constructor for client controller.
-	 * Creates a server User
+	 * Creates a User representing a remote server and attempts to connect to
+	 * it.
 	 * @param myUsername
 	 * @param myColor
 	 * @param ipToConnectTo
@@ -38,6 +40,19 @@ public class SessionController implements ConnectionObserver {
 	 */
 	public SessionController(String myUsername, Color myColor,
 			String ipToConnectTo, int port, String connectionGreeting) {
+		this(myUsername, myColor);
+		User serverUser = new User(ipToConnectTo, port, this.myUsername);
+		connectedUsers.add(serverUser);
+	}
+	
+	/**
+	 * Constructor for non-client controller.
+	 * Sets up the SessionController for interacting with view but does not
+	 * create any Users.
+	 * @param myUsername
+	 * @param myColor
+	 */
+	protected SessionController(String myUsername, Color myColor) {
 		this.myUsername = myUsername;
 		this.myColor = myColor;
 		connectedUsers = new ArrayList<User>();
@@ -46,14 +61,8 @@ public class SessionController implements ConnectionObserver {
 		HTMLEditorKit kit = new HTMLEditorKit();
 		chatLog = (HTMLDocument) kit.createDefaultDocument();
 		writeToChatLog("<p>Welcome to LeChatt!</p>");
-		
-		User serverUser = new User(ipToConnectTo, port, this.myUsername);
-		connectedUsers.add(serverUser);
-	}
-	
-	protected SessionController(String myUsername, Color myColor, int port) {
-		this.myUsername = myUsername;
-		this.myColor = myColor;
+		writeToChatLog("<a href=\"request:12391\">Request test!</a>");
+		writeToChatLog("<a href=\"http://www.wikipedia.org\">Wikipedia</a>");
 	}
 	
 	/**
@@ -76,7 +85,7 @@ public class SessionController implements ConnectionObserver {
 		//TODO (long term): make this more informative
 		// maybe the Requests could write their own element texts
 		// if the sessioncontroller passes them an Element?
-		String userAndID = "\"" + rIn.getUsername() + ":" + rIn.getID() + "\"";
+		String userAndID = "\"request:" + rIn.getID() + "\"";
 		String openTag = "<a href =" + userAndID + 
 				"title = \"Get information about request\"" + ">";
 		String insert = openTag + "New Request!" + "</a>";
@@ -96,16 +105,19 @@ public class SessionController implements ConnectionObserver {
 //		throw new NotImplementedException();
 //	}
 	
-	public Request getRequest(String user, int id) {
-		User u = stringToUser(user);
-		Request request;
-		for(Request r : u.myRequests) {
-			if (r.getID() == id) {
-				request = r;
-			} else {
-			// Request ID not correct
-			}
+	public Request getRequest(int requestID) {
+		Request wantedRequest = null;
+		for (User u : connectedUsers)
+			for(Request r : u.myRequests) {
+				if (r.getID() == requestID) {
+					wantedRequest = r;
+				} else {
+					//TODO: implement an exception type for this
+					System.err.println("SessionController: the requested "
+							+ "request ID is not in use.");
+				}
 		}
+		return wantedRequest;
 	}
 	
 	/** 
@@ -121,9 +133,10 @@ public class SessionController implements ConnectionObserver {
 								String message) {
 		if (checkCryptoAvailable(user, c)) {
 			User receiver = stringToUser(user); 
-			Request fileRequest = new OutgoingFileRequest(Request.DEFAULT_LIFETIME,
-					message, receiver, file, c);
-			newRequest(fileRequest);
+// Uncomment when filerequest is implemented
+//			Request fileRequest = new OutgoingFileRequest(Request.DEFAULT_LIFETIME,
+//					message, receiver, file, c);
+//			newRequest(fileRequest);
 		} else {
 			//notify that the crypto is unavailable
 		}
@@ -138,9 +151,10 @@ public class SessionController implements ConnectionObserver {
 	 */
 	public void sendKeyRequest(String user, CryptoType c, String message) {
 		User receiver = stringToUser(user);
-		Request keyRequest = new OutgoingKeyRequest(Request.DEFAULT_LIFETIME, message, receiver, c);
-		newRequest(keyRequest);
-		}
+// Uncomment when keyrequest is implemented
+//		Request keyRequest = new OutgoingKeyRequest(Request.DEFAULT_LIFETIME, message, receiver, c);
+//		newRequest(keyRequest);
+//		}
 	}
 	
 	/**
@@ -150,7 +164,8 @@ public class SessionController implements ConnectionObserver {
 	 * @return true if crypto is available for the user
 	 */
 	public boolean checkCryptoAvailable(String user, CryptoType c) {
-		for(Crypto crypto : user.myCryptos) {
+		User u = stringToUser(user);
+		for(Crypto crypto : u.myCryptos) {
 	        if(crypto.getType() == c) {
 	            return true;
 	        }
@@ -247,6 +262,9 @@ public class SessionController implements ConnectionObserver {
 	
 	public void disconnect() {
 		// TODO: Implement
+		for (User u : connectedUsers) {
+			u.disconnect();
+		}
 		//throw new NotImplementedException();
 	}
 	
@@ -268,7 +286,7 @@ public class SessionController implements ConnectionObserver {
 	 * @return User object corresponding to the username.
 	 */
 	private User stringToUser(String strUsername) {
-		User wantedUser;
+		User wantedUser = null;
 		for(User u : connectedUsers) {
 			if (u.getUsername() == strUsername) {
 				wantedUser = u;
@@ -308,10 +326,9 @@ public class SessionController implements ConnectionObserver {
 	
 	/**
 	 * Not original work! Credit Bruno Eberhard.
-	 * TODO: är det ok att vi tar hans lösning? kolla med assarna.
 	 * From https://stackoverflow.com/questions/1265282/recommended-method-for-escaping-html-in-java.
-	 * @param s
-	 * @return
+	 * @param String in which to escape characters
+	 * @return Escaped string which is ready for input into HTML document
 	 */
 	public static String escapeHTML(String s) {
 	    StringBuilder out = new StringBuilder(Math.max(16, s.length()));
