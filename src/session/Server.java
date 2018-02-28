@@ -93,11 +93,13 @@ public class Server extends SessionController implements Runnable {
 		 */
 		@Override
 		public void accept(String message) {
-			String acceptTag = "<request reply=\"yes\">" + message + "<\request>";
+			String acceptTag = "<request reply=\"yes\">" + message + "</request>";
 			getUser().writeLine(acceptTag);
 			temporaryConnections.remove(getUser());
 			connectedUsers.add(getUser());
 			notifyObservers();
+			getUser().keepTemporaryConnection = false;
+			getUser().connected = true;
 			getUser().myRequests.remove(this);
 			//TODO: signal to User that keepTemporaryConnection should be false.
 			//done

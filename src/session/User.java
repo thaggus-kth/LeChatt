@@ -12,9 +12,9 @@ public class User implements Runnable {
 	private Socket connection;
 	/** Tracks if have a connection which has been accepted
 	 * by both parties.	 */
-	private boolean connected = false;
+	protected boolean connected = false;
 	//TODO: make a set method
-	private boolean keepTemporaryConnection = true;
+	protected boolean keepTemporaryConnection = true;
 	ArrayList<Request> myRequests = new ArrayList<Request>();
 	ArrayList<Crypto> myCryptos = new ArrayList<Crypto>();
 	/** The username of the remote user or remote server. Note that attempts
@@ -100,7 +100,7 @@ public class User implements Runnable {
 			} else {
 				xmlOut.writeCharacters(toSend.getMessage());
 			}
-			xmlOut.writeEndElement();
+			xmlOut.writeEndDocument();
 			
 		} catch (XMLStreamException e) {
 			if (e.getCause() instanceof IOException) {
@@ -206,12 +206,11 @@ public class User implements Runnable {
 	public void run() {
 		/* Parse the temporary connection messages. */
 		try {
-			boolean keepTemporaryConnection = true;
 			while (keepTemporaryConnection) {
 				XMLStreamReader xmlReader = myXMLReaderFactory.
 						createXMLStreamReader(in);
 				boolean msgDone = false;
-				while (!msgDone) {
+				while (!msgDone && keepTemporaryConnection) {
 					switch (xmlReader.next()) {
 					case XMLStreamConstants.START_ELEMENT:
 						switch (xmlReader.getLocalName()) {
@@ -232,21 +231,25 @@ public class User implements Runnable {
 								 */
 								String reply = xmlReader.getAttributeValue(
 										null, "reply");
+								Request wanted = null;
 								for (Request r : myRequests) {
 									if (r instanceof 
 											OutgoingConnectionRequest) {
 										//TODO: this may need to be revised once
 										// OutgoingConnectionRequest is implemented.
-										switch (reply.toLowerCase()) {
-										case "yes":
-											r.accept(null);
-											break;
-										case "no":
-											r.deny(null);
-											break;
-										}
-										keepTemporaryConnection = false;
+										wanted = r;
 									}
+								}
+								if (wanted != null) {
+									switch (reply.toLowerCase()) {
+									case "yes":
+										wanted.accept(null);
+										break;
+									case "no":
+										wanted.deny(null);
+										break;
+									}
+									//break;
 								}
 							} else {
 								/* This is an incoming connection request. */
@@ -302,6 +305,9 @@ public class User implements Runnable {
 					case XMLStreamConstants.END_ELEMENT:
 						if (xmlReader.getLocalName() == "message") {
 							msgDone = true;
+							if (connected == true) {
+								keepTemporaryConnection = false;
+							}
 							/* this behavior (recreating the XMLStreamReader
 							 * for each <message>-tag) is needed to avoid the
 							 * XML parser complaining about XML documents not
@@ -355,7 +361,7 @@ public class User implements Runnable {
 			 * create a complete Message object.
 			 */
 			boolean isComplete() {
-				return (sender != null && message != null && hexColor != null);
+				return (sender != null && !messageBuilder.toString().isEmpty() && hexColor != null);
 			}
 			
 			/**
