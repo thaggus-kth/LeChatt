@@ -165,9 +165,13 @@ public class User implements Runnable {
 	 * @throws XMLStreamException
 	 */
 	private void xmlOutputMessageHeader(String sender) throws XMLStreamException {
-		xmlOut.writeStartDocument("UTF-8", "1.0");
-		xmlOut.writeStartElement("message");
-		xmlOut.writeAttribute("sender", sender);
+		try {
+			xmlOut.writeStartDocument("UTF-8", "1.0");
+			xmlOut.writeStartElement("message");
+			xmlOut.writeAttribute("sender", sender);
+		} catch (NullPointerException e) {
+			lostConnection();
+		}
 	}
 	
 	/**
@@ -212,6 +216,8 @@ public class User implements Runnable {
 				boolean msgDone = false;
 				while (!msgDone && keepTemporaryConnection) {
 					switch (xmlReader.next()) {
+					//TODO: move this part to method and consolidate temporary and permanent while loops.
+					// this will avoid the first message in server from causing errors.
 					case XMLStreamConstants.START_ELEMENT:
 						switch (xmlReader.getLocalName()) {
 						case "message":
