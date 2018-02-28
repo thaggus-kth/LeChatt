@@ -60,8 +60,11 @@ public class SessionController implements ConnectionObserver {
 		
 		HTMLEditorKit kit = new HTMLEditorKit();
 		chatLog = (HTMLDocument) kit.createDefaultDocument();
+		/* FEATURE TESTS
+		 * TODO: remove when done 
+		 */
 		writeToChatLog("<p>Welcome to LeChatt!</p>");
-		writeToChatLog("<a href=\"request:12391\">Request test!</a>");
+		writeToChatLog("<a href=\"request:0\">Request test!</a>");
 		writeToChatLog("<a href=\"http://www.wikipedia.org\">Wikipedia</a>");
 	}
 	
@@ -116,6 +119,29 @@ public class SessionController implements ConnectionObserver {
 					System.err.println("SessionController: the requested "
 							+ "request ID is not in use.");
 				}
+		}
+		/* THE NEXT STATEMENT IS FOR TEST PURPOSES
+		 * TODO: REMOVE WHEN DONE
+		 */
+		if (wantedRequest == null) {
+			wantedRequest = new Request(null, "test") {
+
+				@Override
+				public void accept(String message) {
+					System.out.println("accepted test request");
+				}
+
+				@Override
+				public void deny(String message) {
+					System.out.println("denied test request");
+				}
+
+				@Override
+				protected void timeOut() {
+					
+				}
+				
+			};
 		}
 		return wantedRequest;
 	}

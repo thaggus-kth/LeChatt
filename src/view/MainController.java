@@ -1,6 +1,10 @@
 package view;
 
 import java.awt.Color;
+import java.io.IOException;
+
+import javax.swing.JOptionPane;
+
 import session.Server;
 import session.SessionController;
 
@@ -30,7 +34,7 @@ public final class MainController {
 	}
 
 	public static void newServerSession(String username, int port,
-														Color color) {
+											Color color) throws IOException {
 		Server serverController = new Server(username, color, port);
 		SessionWindow sw = new SessionWindow(serverController);
 	}

@@ -14,7 +14,7 @@ public class Server extends SessionController implements Runnable {
 	private ServerSocket serverSocket;
 	private boolean running = true;
 	
-	public Server(String myUsername, Color myColor, int port) {
+	public Server(String myUsername, Color myColor, int port) throws IOException {
 		super(myUsername, myColor);
 		Thread th = new Thread(this);
 		try {
@@ -22,6 +22,7 @@ public class Server extends SessionController implements Runnable {
 			th.start();
 		} catch (IOException e) {
 			System.err.println(e);
+			throw e;
 		}
 	}
 	

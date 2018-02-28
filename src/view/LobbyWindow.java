@@ -3,6 +3,7 @@ package view;
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 
 public class LobbyWindow extends JFrame implements ActionListener {
@@ -93,9 +94,12 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		switch (e.getActionCommand()) {
 		case "CLIENT_MODE":
 			mode = SessionMode.CLIENT;
+			ipEntry.setEnabled(true);
 			break;
 		case "SERVER_MODE":
 			mode = SessionMode.SERVER;
+			ipEntry.setEnabled(false);
+			ipEntry.setText("");
 			break;
 		case "SHOW_COLORPICKER":
 			selectedColor = JColorChooser.showDialog(this,
@@ -133,8 +137,7 @@ public class LobbyWindow extends JFrame implements ActionListener {
 			 * keep the start button disabled until all fields are non-empty?
 			 */
 		}
-		if (ip.isEmpty()) {
-			//TODO: make this check if the Server button is selected or not
+		if (mode == SessionMode.CLIENT && ip.isEmpty()) {
 			throw new MyException("Please enter an ip.");
 		}
 		if (selectedColor == null) {
@@ -143,17 +146,18 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		String greeting = "hej"; //TODO (long term): collect from user
 		
 		switch (mode) {
-		case CLIENT :
+		case CLIENT:
 			MainController.newClientSession(name, ip, port, selectedColor,
 					greeting);
-		case SERVER :
-			MainController.newServerSession(name, port, selectedColor);
+		case SERVER:
+			try {
+				MainController.newServerSession(name, port, selectedColor);
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(this, "Could not open server "
+					+ "socket on port " + port + ": " + e.getMessage(),
+					"Error when starting server", JOptionPane.ERROR_MESSAGE);
+			}
 		}
-
-		
-		
-		
-		
 		/* Hide this window */
 		dispose();
 	}
