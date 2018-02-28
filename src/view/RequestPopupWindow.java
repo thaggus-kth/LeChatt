@@ -13,8 +13,8 @@ public class RequestPopupWindow extends JDialog
 	private final String yesOption = "Acceptera";
 	private final String noOption = "Neka";
 	private final String cancelOption = "Avbryt";
-	private JTextField input = new JTextField("Skriv ett svarsmeddelande...",
-												28);
+	private JTextField input = new TextFieldWithHint(
+			"Skriv ett svarsmeddelande...", 28);
 
 	/**
 	 * Creates a popup window representing the passed request.
@@ -23,10 +23,11 @@ public class RequestPopupWindow extends JDialog
 	RequestPopupWindow(SessionWindow parent, Request toShow) {
 		super(parent, "Request");
 		String info = getRequestInfo(toShow);
+		JLabel hint = new JLabel("Svarsmeddelande (valfritt):");
 		JButton yesButton = new JButton(yesOption);
 		JButton noButton = new JButton(noOption);
 		JButton cancelButton = new JButton(cancelOption);
-		Object[] components = {info, input};
+		Object[] components = {info, hint, input};
 		Object[] options = {yesButton, noButton, cancelButton};
 		myRequest = toShow;
 		
@@ -62,7 +63,7 @@ public class RequestPopupWindow extends JDialog
 			sb.append(r.getUsername());
 			sb.append(" vill ansluta och hälsar:\n\"");
 			sb.append(r.getMessage());
-			sb.append("\"");
+			sb.append("\"\n");
 		//} else if (r instanceof KeyRequest) {
 			//lägg till saker
 		} else {

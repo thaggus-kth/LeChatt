@@ -66,7 +66,7 @@ public class SessionController implements ConnectionObserver {
 		 */
 		writeToChatLog("<p>Welcome to LeChatt!</p>");
 		writeToChatLog("<a href=\"request:0\">Request test!</a>");
-		writeToChatLog("<a href=\"http://www.wikipedia.org\">Wikipedia</a>");
+		//writeToChatLog("<a href=\"http://www.wikipedia.org\">Wikipedia</a>");
 	}
 	
 	/**
@@ -91,11 +91,12 @@ public class SessionController implements ConnectionObserver {
 		//TODO (long term): make this more informative
 		// maybe the Requests could write their own element texts
 		// if the sessioncontroller passes them an Element?
-		String userAndID = "\"request:" + rIn.getID() + "\"";
-		String openTag = "<a href=" + userAndID + 
+		String message = "You have a new request! ";
+		String attribute = "\"request:" + rIn.getID() + "\"";
+		String openTag = "<a href=" + attribute + 
 				"title=\"Get information about request\"" + ">";
-		String insert = openTag + "New Request!" + "</a>";
-		writeToChatLog(insert);
+		String link = openTag + "Click here to accept or deny!" + "</a>";
+		writeToChatLog(message + link);
 	}
 	
 	@Override
@@ -302,11 +303,12 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	public void disconnect() {
-		// TODO: Implement
 		for (User u : connectedUsers) {
 			u.disconnect();
 		}
-		//throw new NotImplementedException();
+		for (User u : temporaryConnections) {
+			u.disconnect();
+		}
 	}
 	
 	

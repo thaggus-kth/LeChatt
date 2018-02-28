@@ -35,7 +35,9 @@ public class Server extends SessionController implements Runnable {
 				temporaryConnections.add(newUser);
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (!serverSocket.isClosed()) {
+				System.err.println(e);
+			}
 		}
 	}
 	
@@ -55,6 +57,7 @@ public class Server extends SessionController implements Runnable {
 	@Override
 	public void disconnect() {
 		super.disconnect();
+		running = false;
 		try {
 			if (!serverSocket.isClosed()) {
 				serverSocket.close();
@@ -101,7 +104,7 @@ public class Server extends SessionController implements Runnable {
 			getUser().keepTemporaryConnection = false;
 			getUser().connected = true;
 			getUser().myRequests.remove(this);
-			//TODO: signal to User that keepTemporaryConnection should be false.
+			newNotification(null, getUsername() + " was added to the chat.");
 			//done
 		}
 		
