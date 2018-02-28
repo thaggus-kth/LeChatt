@@ -47,10 +47,16 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		view.setEditable(false);
 		view.setContentType("text/html");
 		view.addHyperlinkListener(this);
-		add(new JScrollPane(view), BorderLayout.CENTER);
+		add(new JScrollPane(view,
+				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+				BorderLayout.CENTER);
 		add(userInfo, BorderLayout.EAST);
 		southPanel.setLayout(new BorderLayout());
-		southPanel.add(new JScrollPane(writeArea), BorderLayout.CENTER);
+		southPanel.add(new JScrollPane(writeArea, 
+				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+				BorderLayout.CENTER);
 		sendButtons.add(sendButton);
 		sendButtons.add(sendFileButton);
 		southPanel.add(sendButtons, BorderLayout.EAST);
@@ -84,6 +90,8 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	@Override
 	public void updateView() {
 		view.setDocument(mySession.getChatLog());
+		/* Scroll to bottom */
+		view.setCaretPosition(view.getDocument().getLength());
 	}
 
 	@Override

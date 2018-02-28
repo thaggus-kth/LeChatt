@@ -75,9 +75,11 @@ public class SessionController implements ConnectionObserver {
 	 */
 	@Override
 	public void newMessage(Message msg) {
+		String sender = msg.getSendersName() + ": ";
 		String htmlEscapedMessage = escapeHTML(msg.getMessage());
-		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
-		writeToChatLog(openTag + htmlEscapedMessage + "</p>");
+		String openTag = "<p style=\"color:" + colorToHex(msg.getColor())
+							+ "\">";
+		writeToChatLog(openTag + sender + htmlEscapedMessage + "</p>");
 	}
 	
 	/**
@@ -223,7 +225,8 @@ public class SessionController implements ConnectionObserver {
 	
 	public void sendTextMessage(String message) {
 		String openTag = "<p style=\"color:" + colorToHex(myColor) + "\">";
-		String insert = openTag + message + "</p>";
+		String insert = openTag + myUsername + " <i>(du)</i>: "
+						+ escapeHTML(message) + "</p>";
 		writeToChatLog(insert);
 		Message textMessage = new Message(myUsername, message, myColor);
 		for(User connectedUser : connectedUsers) {
