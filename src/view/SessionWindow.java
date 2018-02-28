@@ -47,10 +47,10 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		view.setEditable(false);
 		view.setContentType("text/html");
 		view.addHyperlinkListener(this);
-		add(view, BorderLayout.CENTER);
+		add(new JScrollPane(view), BorderLayout.CENTER);
 		add(userInfo, BorderLayout.EAST);
 		southPanel.setLayout(new BorderLayout());
-		southPanel.add(writeArea, BorderLayout.CENTER);
+		southPanel.add(new JScrollPane(writeArea), BorderLayout.CENTER);
 		sendButtons.add(sendButton);
 		sendButtons.add(sendFileButton);
 		southPanel.add(sendButtons, BorderLayout.EAST);
