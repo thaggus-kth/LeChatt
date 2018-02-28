@@ -149,6 +149,7 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		case CLIENT:
 			MainController.newClientSession(name, ip, port, selectedColor,
 					greeting);
+			break;
 		case SERVER:
 			try {
 				MainController.newServerSession(name, port, selectedColor);
@@ -157,6 +158,7 @@ public class LobbyWindow extends JFrame implements ActionListener {
 					+ "socket on port " + port + ": " + e.getMessage(),
 					"Error when starting server", JOptionPane.ERROR_MESSAGE);
 			}
+			break;
 		}
 		/* Hide this window */
 		dispose();

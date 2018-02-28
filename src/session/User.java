@@ -13,15 +13,17 @@ public class User implements Runnable {
 	/** Tracks if have a connection which has been accepted
 	 * by both parties.	 */
 	private boolean connected = false;
-	ArrayList<Request> myRequests;
-	ArrayList<Crypto> myCryptos;
+	//TODO: make a set method
+	private boolean keepTemporaryConnection = true;
+	ArrayList<Request> myRequests = new ArrayList<Request>();
+	ArrayList<Crypto> myCryptos = new ArrayList<Crypto>();
 	/** The username of the remote user or remote server. Note that attempts
 	 * to change username by the remote party are ignored. */
 	private String username; //TODO: this field should be made private, and a getUsername method should be added.
 	/** The username of the local user.  */
 	private String defaultSender;
 	private Crypto activeCrypto;
-	private ArrayList<ConnectionObserver> observers;
+	private ArrayList<ConnectionObserver> observers = new ArrayList<ConnectionObserver>();
 	/* PrintWriter replaced by XMLStreamWriter, which
 	 * accesses the out stream of the Socket directly. */
 	//private PrintWriter out;
@@ -43,6 +45,14 @@ public class User implements Runnable {
 		Thread th = new Thread(this);
 		defaultSender = myServer.getMyUsername();
 		connection = mySocket;
+		try {
+			xmlOut = myXMLWriterFactory.createXMLStreamWriter(
+            		connection.getOutputStream(), "UTF-8");
+			in = new BufferedReader(new InputStreamReader(
+					connection.getInputStream()));
+		} catch (IOException | XMLStreamException e) {
+			e.printStackTrace();
+		}
 		myRequests.add(myServer.new IncomingConnectionRequest(this));
 		th.start();
 	}
@@ -235,6 +245,7 @@ public class User implements Runnable {
 											r.deny(null);
 											break;
 										}
+										keepTemporaryConnection = false;
 									}
 								}
 							} else {
@@ -287,6 +298,7 @@ public class User implements Runnable {
 							}
 							
 						}
+						break;
 					case XMLStreamConstants.END_ELEMENT:
 						if (xmlReader.getLocalName() == "message") {
 							msgDone = true;
@@ -306,6 +318,7 @@ public class User implements Runnable {
 		} catch (XMLStreamException e) {
 			if (e.getCause() instanceof IOException) {
 				/* This means that the Socket stream was closed. */
+				e.printStackTrace();
 				lostConnection();
 			} else {
 				/* We recieved XML which was not well-formed. */

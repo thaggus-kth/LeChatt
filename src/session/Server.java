@@ -31,6 +31,8 @@ public class Server extends SessionController implements Runnable {
 			while (running) {
 				Socket newSocket = serverSocket.accept();
 				User newUser = new User(newSocket, this);
+				newUser.addObserver(this);
+				temporaryConnections.add(newUser);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -93,9 +95,11 @@ public class Server extends SessionController implements Runnable {
 		public void accept(String message) {
 			String acceptTag = "<request reply=\"yes\">" + message + "<\request>";
 			getUser().writeLine(acceptTag);
+			temporaryConnections.remove(getUser());
 			connectedUsers.add(getUser());
 			notifyObservers();
 			getUser().myRequests.remove(this);
+			//TODO: signal to User that keepTemporaryConnection should be false.
 			//done
 		}
 		
@@ -110,6 +114,7 @@ public class Server extends SessionController implements Runnable {
 			getUser().writeLine(denyTag);
 			getUser().disconnect();
 			getUser().myRequests.remove(this);
+			temporaryConnections.remove(getUser());
 			//done
 		}
 

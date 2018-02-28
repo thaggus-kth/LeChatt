@@ -22,8 +22,9 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
  */
 public class SessionController implements ConnectionObserver {
 	
-	protected List<User> connectedUsers;
-	private List<ChatObserver> observers;
+	protected List<User> connectedUsers = new ArrayList<User>();
+	protected List<User> temporaryConnections = new ArrayList<User>();
+	private List<ChatObserver> observers = new ArrayList<ChatObserver>();
 	private String myUsername;
 	private Color myColor;
 	private HTMLDocument chatLog;
@@ -43,6 +44,8 @@ public class SessionController implements ConnectionObserver {
 		this(myUsername, myColor);
 		User serverUser = new User(ipToConnectTo, port, this.myUsername);
 		connectedUsers.add(serverUser);
+		serverUser.addObserver(this);
+		serverUser.sendConnectRequest(connectionGreeting);
 	}
 	
 	/**
@@ -55,9 +58,7 @@ public class SessionController implements ConnectionObserver {
 	protected SessionController(String myUsername, Color myColor) {
 		this.myUsername = myUsername;
 		this.myColor = myColor;
-		connectedUsers = new ArrayList<User>();
-		observers = new ArrayList<ChatObserver>();
-		
+				
 		HTMLEditorKit kit = new HTMLEditorKit();
 		chatLog = (HTMLDocument) kit.createDefaultDocument();
 		/* FEATURE TESTS
@@ -89,8 +90,8 @@ public class SessionController implements ConnectionObserver {
 		// maybe the Requests could write their own element texts
 		// if the sessioncontroller passes them an Element?
 		String userAndID = "\"request:" + rIn.getID() + "\"";
-		String openTag = "<a href =" + userAndID + 
-				"title = \"Get information about request\"" + ">";
+		String openTag = "<a href=" + userAndID + 
+				"title=\"Get information about request\"" + ">";
 		String insert = openTag + "New Request!" + "</a>";
 		writeToChatLog(insert);
 	}
@@ -114,11 +115,22 @@ public class SessionController implements ConnectionObserver {
 			for(Request r : u.myRequests) {
 				if (r.getID() == requestID) {
 					wantedRequest = r;
-				} else {
+				}/* else {
 					//TODO: implement an exception type for this
+					 * Move this to outside for loops
 					System.err.println("SessionController: the requested "
 							+ "request ID is not in use.");
+				}*/
+		}
+		if (wantedRequest == null) {
+			for (User u : temporaryConnections) {
+				for(Request r : u.myRequests) {
+					if (r.getID() == requestID) {
+						wantedRequest = r;
+					}
 				}
+					
+			}
 		}
 		/* THE NEXT STATEMENT IS FOR TEST PURPOSES
 		 * TODO: REMOVE WHEN DONE
