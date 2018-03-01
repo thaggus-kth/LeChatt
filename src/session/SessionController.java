@@ -221,6 +221,15 @@ public class SessionController implements ConnectionObserver {
 	    return false;
 	}
 	
+	public CryptoType[] getAvailableCryptos(String user) {
+		User u = stringToUser(user);
+		ArrayList<CryptoType> ret = new ArrayList<CryptoType>();
+		for (Crypto c : u.myCryptos) {
+			ret.add(c.getType());
+		}
+		return ret.toArray(new CryptoType[0]);
+	}
+	
 	/**
 	 * Sets active crypto for specified user
 	 * @param user whose crypto is changed
