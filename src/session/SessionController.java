@@ -158,9 +158,10 @@ public class SessionController implements ConnectionObserver {
 				}
 
 				@Override
-				protected void timeOut() {
-					
-				}
+				protected void timeOut() {}
+				
+				@Override
+				protected void kill() {}
 				
 			};
 		}

@@ -63,9 +63,14 @@ public class RequestPopupWindow extends JDialog
 		if (r instanceof ConnectionRequest) {
 			sb.append("Användaren ");
 			sb.append(r.getUsername());
-			sb.append(" vill ansluta och hälsar:\n\"");
-			sb.append(r.getMessage());
-			sb.append("\"\n");
+			sb.append(" vill ansluta");
+			if (!r.getMessage().isEmpty()) {
+				sb.append(" och hälsar:\n\"");
+				sb.append(r.getMessage());
+				sb.append("\"\n");
+			} else {
+				sb.append(".\n");
+			}
 		//} else if (r instanceof KeyRequest) {
 			//lägg till saker
 		} else {

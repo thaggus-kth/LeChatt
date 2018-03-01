@@ -124,6 +124,7 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		/* Collect information */
 		String name = nameEntry.getText();
 		String ip = ipEntry.getText();
+		String greeting = "";
 		int port;
 		
 		/* Validate */
@@ -148,8 +149,10 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		if (selectedColor == null) {
 			throw new MyException("Please select a color");
 		}
-		String greeting = "hej"; //TODO (long term): collect from user
-		
+		if (mode == SessionMode.CLIENT) {
+			greeting = JOptionPane.showInputDialog(this,
+					"Skriv en hälsningsfras (valfritt):");
+		}
 		try {
 			switch (mode) {
 			case CLIENT:
