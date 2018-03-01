@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.io.IOException;
 
 import javax.swing.JOptionPane;
+import javax.xml.stream.XMLStreamException;
 
 import session.Server;
 import session.SessionController;
@@ -28,9 +29,13 @@ public final class MainController {
 	}
 	
 	public static void newClientSession(String username, String ip, int port,
-			Color color, String greeting) {
-		SessionController sc = new SessionController(username, color, ip, port, greeting);
-		SessionWindow sw = new SessionWindow(sc);
+			Color color, String greeting) throws IOException {
+		try {
+			SessionController sc = new SessionController(username, color, ip, port, greeting);
+			SessionWindow sw = new SessionWindow(sc);
+		} catch (XMLStreamException e) {
+			throw new IOException(e);
+		}
 	}
 
 	public static void newServerSession(String username, int port,

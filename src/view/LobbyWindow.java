@@ -110,7 +110,8 @@ public class LobbyWindow extends JFrame implements ActionListener {
 			try {
 				attemptStart();
 			} catch (MyException err) {
-				System.err.println(err);
+				JOptionPane.showMessageDialog(this, err.getMessage(),
+						"Incorrect input", JOptionPane.ERROR_MESSAGE);
 			}
 			break;
 		default:
@@ -128,8 +129,12 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		/* Validate */
 		try {
 			 port = Integer.valueOf(portEntry.getText());
-		} catch (NumberFormatException e) {
-			throw new MyException("Please specify a valid port no.");
+			 if (port < 1024 || port > 65535) {
+				 throw new IllegalArgumentException();
+			 }
+		} catch (IllegalArgumentException e) {
+			throw new MyException("Please specify a valid port no."
+					+ " in the range 1024-65535");
 		}
 		if (name.isEmpty()) {
 			throw new MyException("Please enter a username.");
@@ -145,23 +150,34 @@ public class LobbyWindow extends JFrame implements ActionListener {
 		}
 		String greeting = "hej"; //TODO (long term): collect from user
 		
-		switch (mode) {
-		case CLIENT:
-			MainController.newClientSession(name, ip, port, selectedColor,
-					greeting);
-			break;
-		case SERVER:
-			try {
+		try {
+			switch (mode) {
+			case CLIENT:
+				MainController.newClientSession(name, ip, port, selectedColor,
+							greeting);
+				break;
+			case SERVER:
 				MainController.newServerSession(name, port, selectedColor);
-			} catch (IOException e) {
-				JOptionPane.showMessageDialog(this, "Could not open server "
-					+ "socket on port " + port + ": " + e.getMessage(),
-					"Error when starting server", JOptionPane.ERROR_MESSAGE);
+				break;
 			}
-			break;
+			/* Hide this window */
+			dispose();
+		} catch (IOException e) {
+			String errorMsg = "";
+			switch (mode) {
+			case CLIENT:
+				errorMsg = "Could not connect to " + ip + ":" + port
+				+ ". Error message:\n" + e;
+				break;
+			case SERVER:
+				errorMsg = "Could not open server socket on port " + port
+				+ ": " + e.getMessage();
+				break;
+			}
+			JOptionPane.showMessageDialog(this, errorMsg, "Connection error",
+					JOptionPane.ERROR_MESSAGE);
+			
 		}
-		/* Hide this window */
-		dispose();
 	}
 	
 }

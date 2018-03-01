@@ -65,23 +65,23 @@ public class User implements Runnable {
 	 * @param port the port to connect to.
 	 * @param ourUsername the username of the local user (which will be
 	 * displayed to the remote users)
+	 * @throws IOException if there was a problem connecting to the host
+	 * @throws XMLStreamException if there was a problem opeing the XML
+	 * stream
 	 */
-	public User(String hostAddress, int port, String ourUsername) {
+	public User(String hostAddress, int port, String ourUsername)
+									throws IOException, XMLStreamException {
 		Thread th = new Thread(this);
 		defaultSender = ourUsername;
-		try {
-            connection = new Socket(hostAddress, port);
-            //out = new PrintWriter(connection.getOutputStream(), true);
-            xmlOut = myXMLWriterFactory.createXMLStreamWriter(
-            		connection.getOutputStream(), "UTF-8");
-            in = new BufferedReader(new InputStreamReader(
-                                        connection.getInputStream()));
-            th.start();
-        } catch (UnknownHostException e) {
-            System.err.println("Don't know about host.\n" + e);
-        } catch (IOException | XMLStreamException e) {
-        	System.err.println(e);
-        }
+		connection = new Socket();
+		connection.connect(new InetSocketAddress(hostAddress, port), 10000);
+		//out = new PrintWriter(connection.getOutputStream(), true);
+		xmlOut = myXMLWriterFactory.createXMLStreamWriter(
+				connection.getOutputStream(), "UTF-8");
+		in = new BufferedReader(new InputStreamReader(
+				connection.getInputStream()));
+		th.start();
+        
 	}
 	
 	/**
@@ -204,6 +204,8 @@ public class User implements Runnable {
 				 */
 			}
 		}
+		connected = false;
+		keepTemporaryConnection = false;
 		try {
 			xmlOut.close();
 		} catch (XMLStreamException e) {
@@ -217,9 +219,9 @@ public class User implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		connected = false;
-		keepTemporaryConnection = false;
-		//TODO: kill all requests in myRequest.
+		for (Request r : myRequests) {
+			r.kill();
+		}
 	}
 	
 	public void run() {
@@ -238,8 +240,16 @@ public class User implements Runnable {
 				if (e.getCause() instanceof IOException) {
 					/* This means that the Socket stream was closed. */
 					//e.printStackTrace();
-					lostConnection();
-				} else {
+					if (connected || keepTemporaryConnection) {
+						/* We lost the connection unexpectedly */
+						lostConnection();
+					} else {
+						/* We disconnected intentionally from another thread
+						 * which caused a socket exception in this thread.
+						 * Do nothing.
+						 */
+					}
+				} else if (connected || keepTemporaryConnection) {
 					/* We recieved XML which was not well-formed. */
 					//e.printStackTrace(); //uncomment for debug.
 					String errorMsg = "Received a broken XML message from ";
@@ -296,10 +306,10 @@ public class User implements Runnable {
 						if (wanted != null) {
 							switch (reply.toLowerCase()) {
 							case "yes":
-								wanted.accept(wanted.getMessage());
+								wanted.accept(xmlReader.getElementText());
 								break;
 							case "no":
-								wanted.deny(wanted.getMessage());
+								wanted.deny(xmlReader.getElementText());
 								break;
 							}
 						}
@@ -546,6 +556,7 @@ public class User implements Runnable {
 		public void accept(String message) {
 			/* The remote user accepted our request. */
 			StringBuilder msgOut = new StringBuilder();
+			disableTimeOut();
 			msgOut.append(username);
 			msgOut.append('@');
 			msgOut.append(connection.getInetAddress());
@@ -567,6 +578,7 @@ public class User implements Runnable {
 		public void deny(String message) {
 			/* The remote user denied our request. */
 			StringBuilder msgOut = new StringBuilder();
+			disableTimeOut();
 			msgOut.append(username);
 			msgOut.append('@');
 			msgOut.append(connection.getInetAddress());
@@ -588,7 +600,18 @@ public class User implements Runnable {
 			fireUserNotificationEvent("Connection request to " +
 								connection.getInetAddress() + " timed out.");
 			getUser().myRequests.remove(this);
+			disableTimeOut();
 			disconnect();
+		}
+
+		@Override
+		protected void kill() {
+			disableTimeOut();
+			for (RequestObserver o : getObservers()) {
+				o.requestKilled();
+			}
+			// TODO Auto-generated method stub
+			
 		}
 		
 	}

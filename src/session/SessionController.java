@@ -8,6 +8,7 @@ import java.util.List;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.*;
+import javax.xml.stream.XMLStreamException;
 
 import crypto.Crypto;
 import crypto.CryptoType;
@@ -38,9 +39,14 @@ public class SessionController implements ConnectionObserver {
 	 * @param ipToConnectTo
 	 * @param port
 	 * @param connectionGreeting
+	 * @throws IOException if there was a problem opening the connection to
+	 * server.
+	 * @throws XMLStreamException if there was a problem starting the XML
+	 * stream.
 	 */
 	public SessionController(String myUsername, Color myColor,
-			String ipToConnectTo, int port, String connectionGreeting) {
+			String ipToConnectTo, int port, String connectionGreeting)
+					throws IOException, XMLStreamException {
 		this(myUsername, myColor);
 		User serverUser = new User(ipToConnectTo, port, this.myUsername);
 		connectedUsers.add(serverUser);
@@ -65,7 +71,7 @@ public class SessionController implements ConnectionObserver {
 		 * TODO: remove when done 
 		 */
 		writeToChatLog("<p>Welcome to LeChatt!</p>");
-		writeToChatLog("<a href=\"request:0\">Request test!</a>");
+		//writeToChatLog("<a href=\"request:0\">Request test!</a>");
 		//writeToChatLog("<a href=\"http://www.wikipedia.org\">Wikipedia</a>");
 	}
 	
