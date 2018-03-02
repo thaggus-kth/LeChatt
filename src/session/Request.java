@@ -1,6 +1,10 @@
 package session;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import javax.swing.Timer;
 import javax.swing.text.Element;
 
@@ -10,6 +14,7 @@ public abstract class Request implements java.awt.event.ActionListener {
 	
 	public static final int DEFAULT_LIFETIME = 60*1000;
 	private static int nextID = 1;
+	private List<RequestObserver> observers = new ArrayList<RequestObserver>();
 	private int myID;
 	private Timer timeOutTimer;
 	private User myUser;
@@ -28,7 +33,7 @@ public abstract class Request implements java.awt.event.ActionListener {
 		myUser = user;
 		myID = nextID++;
 		timeOutTimer = new Timer(DEFAULT_LIFETIME, this);
-		//timeOutTimer.start();
+		timeOutTimer.start();
 	}
 	/**
 	 * Gets the instance-unique ID number of the request.
@@ -109,10 +114,38 @@ public abstract class Request implements java.awt.event.ActionListener {
 	 * order to disable the GUI or someone else from accepting the Request.
 	 */
 	
+	/**
+	 * This method is called when the connection to the owning user has been
+	 * lost and should disable the request from performing any new actions
+	 * or timeing out.
+	 */
+	protected abstract void kill();
+	
+	/**
+	 * Disables the possibility for this Request to time out.
+	 * Any implementation of accept() or deny() in subclasses
+	 * should call this method!
+	 */
+	public void disableTimeOut() {
+		timeOutTimer.stop();
+	}
+	
 	public void actionPerformed(ActionEvent e) {
 		timeOut();
 	}
 	
+	public void addObserver(RequestObserver o) {
+		observers.add(o);
+	}
+	
+	public void removeObserver(RequestObserver o) {
+		observers.remove(o);
+	}
+	
+	protected RequestObserver[] getObservers() {
+		return observers.toArray(new RequestObserver[0]);
+	}
+		
 	/**
 	 * This interface is provided for view components which display requests,
 	 * so that they can disable themselves if the request is timed out or
@@ -125,11 +158,11 @@ public abstract class Request implements java.awt.event.ActionListener {
 		 * This method should show a message indicating that the request timed
 		 * out, and disable the input methods of accepting the request.
 		 */
-		public void timedOut();
+		public void requestTimedOut();
 		/**
 		 * This method should inform the user that the request was disabled due
 		 * to a connection problem.
 		 */
-		public void killed();
+		public void requestKilled();
 	}
 }

@@ -31,6 +31,8 @@ public class RequestPopupWindow extends JDialog
 		Object[] options = {yesButton, noButton, cancelButton};
 		myRequest = toShow;
 		
+		toShow.addObserver(this);
+		
 		optionPane = new JOptionPane(components, JOptionPane.PLAIN_MESSAGE,
 				JOptionPane.YES_NO_OPTION, null, options);
 		setContentPane(optionPane);
@@ -61,9 +63,14 @@ public class RequestPopupWindow extends JDialog
 		if (r instanceof ConnectionRequest) {
 			sb.append("Användaren ");
 			sb.append(r.getUsername());
-			sb.append(" vill ansluta och hälsar:\n\"");
-			sb.append(r.getMessage());
-			sb.append("\"\n");
+			sb.append(" vill ansluta");
+			if (!r.getMessage().isEmpty()) {
+				sb.append(" och hälsar:\n\"");
+				sb.append(r.getMessage());
+				sb.append("\"\n");
+			} else {
+				sb.append(".\n");
+			}
 		//} else if (r instanceof KeyRequest) {
 			//lägg till saker
 		} else {
@@ -79,7 +86,7 @@ public class RequestPopupWindow extends JDialog
 		return sb.toString();
 	}
 	@Override
-	public void timedOut() {
+	public void requestTimedOut() {
 		if (isVisible()) {
 			JOptionPane.showMessageDialog(this, "Request timed out!",
 					"Timeout", JOptionPane.WARNING_MESSAGE);
@@ -88,7 +95,7 @@ public class RequestPopupWindow extends JDialog
 	}
 
 	@Override
-	public void killed() {
+	public void requestKilled() {
 		if (isVisible()) {
 			dispose();
 		}

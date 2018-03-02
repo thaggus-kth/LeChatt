@@ -46,6 +46,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		view.setPreferredSize(new Dimension(600,400));
 		view.setEditable(false);
 		view.setContentType("text/html");
+		view.setDocument(sc.getChatLog());
 		view.addHyperlinkListener(this);
 		add(new JScrollPane(view,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,

@@ -14,7 +14,8 @@ public class Server extends SessionController implements Runnable {
 	private ServerSocket serverSocket;
 	private boolean running = true;
 	
-	public Server(String myUsername, Color myColor, int port) throws IOException {
+	public Server(String myUsername, Color myColor, int port)
+														throws IOException {
 		super(myUsername, myColor);
 		Thread th = new Thread(this);
 		try {
@@ -97,6 +98,7 @@ public class Server extends SessionController implements Runnable {
 		@Override
 		public void accept(String message) {
 			String acceptTag = "<request reply=\"yes\">" + message + "</request>";
+			disableTimeOut();
 			getUser().writeLine(acceptTag);
 			temporaryConnections.remove(getUser());
 			connectedUsers.add(getUser());
@@ -115,7 +117,8 @@ public class Server extends SessionController implements Runnable {
 		 */
 		@Override
 		public void deny(String message) {
-			String denyTag = "<request reply=\"no\">" + message + "<\request>";
+			String denyTag = "<request reply=\"no\">" + message + "</request>";
+			disableTimeOut();
 			getUser().writeLine(denyTag);
 			getUser().disconnect();
 			getUser().myRequests.remove(this);
@@ -125,9 +128,14 @@ public class Server extends SessionController implements Runnable {
 
 		@Override
 		protected void timeOut() {
+			disableTimeOut();
 			//TODO: modify the HTML Element
 			//TODO: write a message in the chat log
+			newNotification(null, "The incoming request timed out.");
 			deny("Request timed out.");
+			for (RequestObserver o : getObservers()) {
+				o.requestTimedOut();
+			}
 			//done
 		}
 		
@@ -155,6 +163,14 @@ public class Server extends SessionController implements Runnable {
 				throw new IllegalArgumentException("Message already set!");
 			}
 			myMessage = messageIn;
+		}
+
+		@Override
+		protected void kill() {
+			disableTimeOut();
+			for (RequestObserver o : getObservers()) {
+				o.requestKilled();
+			}
 		}
 	}
 }

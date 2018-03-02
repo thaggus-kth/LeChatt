@@ -21,4 +21,5 @@ public enum CryptoType {
 	 * AES encryption.
 	 */
 	AES;
+	
 }
