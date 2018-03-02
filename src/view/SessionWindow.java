@@ -22,7 +22,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	private SessionController mySession;
 	private JButton sendButton;
 	private JButton sendFileButton;
-	private JPanel userInfo;
+	private AbstractUserInfo userInfo;
 	private JTextPane view;
 	private JTextArea writeArea;
 	private JFileChooser fileChooser;
@@ -35,13 +35,19 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		JMenuBar menuBar = new JMenuBar();
 		mySession = sc;
 		view = new JTextPane(sc.getChatLog());
-		userInfo = new JPanel();
-		userInfo.setPreferredSize(new Dimension(200, 400));
 		sendButton = new JButton("Skicka");
 		sendFileButton = new JButton("Skicka fil...");
 		writeArea = new TextAreaWithHint("Skriv ett meddelande här...");
 		fileChooser = new JFileChooser("Välj vilken fil du vill skicka...");
 		
+		if (sc instanceof Server) { 
+			userInfo = new ServerUserInfo(this, (Server) sc);
+		} else {
+			userInfo = new ClientUserInfo(this, sc);
+		}
+		
+		userInfo.setPreferredSize(new Dimension(200, 400));
+		userInfo.setMinimumSize(new Dimension(200, 400));
 		setLayout(new BorderLayout());
 		view.setPreferredSize(new Dimension(600,400));
 		view.setEditable(false);
@@ -69,6 +75,7 @@ public class SessionWindow extends JFrame implements ChatObserver,
 		sendButton.setEnabled(false);
 		writeArea.addKeyListener(this);
 		sendFileButton.setActionCommand("SEND_FILE");
+		sendFileButton.addActionListener(this);
 		
 		menu = new JMenu("Anslutning");
 		menuItem = new JMenuItem("Ny session...");
@@ -91,6 +98,8 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	@Override
 	public void updateView() {
 		view.setDocument(mySession.getChatLog());
+		sendFileButton.setEnabled(
+				userInfo.getSelectedID() != AbstractUserInfo.NO_SELECTION);
 		/* Scroll to bottom */
 		view.setCaretPosition(view.getDocument().getLength());
 	}
@@ -106,7 +115,9 @@ public class SessionWindow extends JFrame implements ChatObserver,
 			attemptSendMessage();
 			break;
 		case "SEND_FILE":
-			showFileChooserWindow();
+			new SendRequestPopup(this, mySession,
+					SendRequestPopup.SupportedRequests.FILE_REQUEST,
+					userInfo.getSelectedID());
 			break;
 		case "EXIT":
 			dispose();

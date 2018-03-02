@@ -2,8 +2,10 @@ package session;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import javax.swing.text.Element;
 import javax.xml.stream.XMLOutputFactory;
@@ -68,6 +70,19 @@ public class Server extends SessionController implements Runnable {
 		}
 	}
 	
+	public String getInetAdress(boolean includePort) {
+		String toReturn = "";
+		try {
+			toReturn = InetAddress.getLocalHost().toString();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		if (includePort) {
+			toReturn += ":" + serverSocket.getLocalPort();
+		}
+		return toReturn;
+	}
+	
 	/**
 	 * Request class for incoming connections.
 	 * @author thaggus
@@ -102,11 +117,11 @@ public class Server extends SessionController implements Runnable {
 			getUser().writeLine(acceptTag);
 			temporaryConnections.remove(getUser());
 			connectedUsers.add(getUser());
-			notifyObservers();
 			getUser().keepTemporaryConnection = false;
 			getUser().connected = true;
 			getUser().myRequests.remove(this);
 			newNotification(null, getUsername() + " was added to the chat.");
+			notifyObservers();
 			//done
 		}
 		

@@ -41,6 +41,7 @@ public class RequestPopupWindow extends JDialog
 		cancelButton.addActionListener(this);
 		//optionPane.addPropertyChangeListener(this);
 		pack();
+		setVisible(true);
 	}
 
 	public void actionPerformed(ActionEvent e) {

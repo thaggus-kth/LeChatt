@@ -15,7 +15,7 @@ public abstract class Request implements java.awt.event.ActionListener {
 	public static final int DEFAULT_LIFETIME = 60*1000;
 	private static int nextID = 1;
 	private List<RequestObserver> observers = new ArrayList<RequestObserver>();
-	private int myID;
+	private final int myID;
 	private Timer timeOutTimer;
 	private User myUser;
 	private String myMessage;

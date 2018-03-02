@@ -4,7 +4,10 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.*;
@@ -81,10 +84,15 @@ public class SessionController implements ConnectionObserver {
 	 */
 	@Override
 	public void newMessage(Message msg) {
-		String sender = msg.getSendersName() + ": ";
+		String sender = msg.getSendersName();
 		String htmlEscapedMessage = escapeHTML(msg.getMessage());
 		String openTag = "<p style=\"color:" + colorToHex(msg.getColor())
 							+ "\">";
+		if (msg.getCryptoType() != CryptoType.PLAIN) {
+			sender += "<i>(Krypterat med " + msg.getCryptoType().toString()
+					+ ")</i>";
+		}
+		sender += ":";
 		writeToChatLog(openTag + sender + htmlEscapedMessage + "</p>");
 	}
 	
@@ -168,19 +176,32 @@ public class SessionController implements ConnectionObserver {
 		return wantedRequest;
 	}
 	
+	public User getUserByID(int userID) {
+		User wantedUser = null;
+		for (User u : connectedUsers) {
+			if (u.getID() == userID)
+				wantedUser = u;
+		}
+		if (wantedUser == null) {
+			throw new IllegalArgumentException(
+					"No user with that ID is connected!");
+		}
+		return wantedUser;
+	}
+	
 	/** 
 	 * Checks if the crypto is available for the user, and if so creates a new
 	 * OutgoingFileRequest object. If not, notifies that the crypto is
 	 * unavailable for the specified user.
-	 * @param user User receiving the request
+	 * @param userID ID of User receiving the request
 	 * @param file File to be sent
 	 * @param c CryptoType used
 	 * @param message Accompanying message to the request
 	 */
-	public void sendFileRequest(String user, File file, CryptoType c, 
+	public void sendFileRequest(int userID, File file, CryptoType c, 
 								String message) {
-		if (checkCryptoAvailable(user, c)) {
-			User receiver = stringToUser(user); 
+		if (checkCryptoAvailable(userID, c)) {
+			User receiver = getUserByID(userID);
 // Uncomment when filerequest is implemented
 //			Request fileRequest = new OutgoingFileRequest(Request.DEFAULT_LIFETIME,
 //					message, receiver, file, c);
@@ -193,12 +214,12 @@ public class SessionController implements ConnectionObserver {
 	
 	/**
 	 * Creates a Outgoing keyrequest object and forwards it to the newRequest method
-	 * @param user User to receive the request
+	 * @param userID ID of User to receive the request
 	 * @param c	Crypto for which a key is requested
 	 * @param message Text message accompanying the request
 	 */
-	public void sendKeyRequest(String user, CryptoType c, String message) {
-		User receiver = stringToUser(user);
+	public void sendKeyRequest(int userID, CryptoType c, String message) {
+		User receiver = getUserByID(userID);
 // Uncomment when keyrequest is implemented
 //		Request keyRequest = new OutgoingKeyRequest(Request.DEFAULT_LIFETIME, message, receiver, c);
 //		newRequest(keyRequest);
@@ -213,21 +234,16 @@ public class SessionController implements ConnectionObserver {
 	 */
 	public boolean checkCryptoAvailable(String user, CryptoType c) {
 		User u = stringToUser(user);
-		for(Crypto crypto : u.myCryptos) {
-	        if(crypto.getType() == c) {
-	            return true;
-	        }
-	    }
-	    return false;
+		return u.myCryptos.containsKey(c);
 	}
 	
-	public CryptoType[] getAvailableCryptos(String user) {
-		User u = stringToUser(user);
-		ArrayList<CryptoType> ret = new ArrayList<CryptoType>();
-		for (Crypto c : u.myCryptos) {
-			ret.add(c.getType());
-		}
-		return ret.toArray(new CryptoType[0]);
+	public boolean checkCryptoAvailable(int userID, CryptoType c) {
+		return getUserByID(userID).myCryptos.containsKey(c);
+	}
+	
+	public CryptoType[] getAvailableCryptos(int userID) {
+		User u = getUserByID(userID);
+		return u.myCryptos.keySet().toArray(new CryptoType[0]);
 	}
 	
 	/**
@@ -238,6 +254,11 @@ public class SessionController implements ConnectionObserver {
 	public void setCrypto(String user, CryptoType c) {
 		User receiver = stringToUser(user);
 		receiver.setActiveCrypto(c);
+	}
+	
+	public void setCrypto(int userID, CryptoType c) {
+		User u = getUserByID(userID);
+		u.setActiveCrypto(c);
 	}
 	
 	public void sendTextMessage(String message) {
@@ -281,6 +302,18 @@ public class SessionController implements ConnectionObserver {
 	}
 	
 	/**
+	 * Returns an id-username map of all connected users.
+	 * @return a Map of the connected users.
+	 */
+	public TreeMap<Integer, String> getUsernamesAndIDs() {
+		TreeMap<Integer, String> m = new TreeMap<Integer, String>();
+		for (User u : connectedUsers) {
+			m.put(u.getID(), u.getUsername());
+		}
+		return m;
+	}
+	
+	/**
 	 * Gets the HTMLDocument containing the XML parsed chatlog
 	 * @return HTMLDocument containing the chatLog in XML format.
 	 */
@@ -318,11 +351,29 @@ public class SessionController implements ConnectionObserver {
 		notifyObservers();
 	}
 	
+	/**
+	 * Disconnects the user specified by the user ID. Notifies the observers.
+	 * @param userID the ID number of the user to kick.
+	 */
+	public void kickUser(int userID) {
+		User kickMe = getUserByID(userID);
+		kickMe.disconnect();
+		connectedUsers.remove(kickMe);
+		notifyObservers();
+	}
+	
 	public void disconnect() {
-		for (User u : connectedUsers) {
+		/* We must use Iterator to avoid ConcurrentModificationException */
+		Iterator<User> iterator = connectedUsers.iterator();
+		while (iterator.hasNext()) {
+			User u = iterator.next();
+			iterator.remove();
 			u.disconnect();
 		}
-		for (User u : temporaryConnections) {
+		iterator = temporaryConnections.iterator();
+		while (iterator.hasNext()) {
+			User u = iterator.next();
+			iterator.remove();
 			u.disconnect();
 		}
 	}
@@ -341,6 +392,8 @@ public class SessionController implements ConnectionObserver {
 
 	/**
 	 * Finds the User object corresponding to the String username
+	 * Note that if there are multiple users with the same username only the
+	 * one which connected last will be returned!
 	 * @param strUsername String containing the username of the sought User
 	 * @return User object corresponding to the username.
 	 */
@@ -402,5 +455,12 @@ public class SessionController implements ConnectionObserver {
 	        }
 	    }
 	    return out.toString();
+	}
+
+	@Override
+	public void userDisconnected(User source) {
+		connectedUsers.remove(source);
+		temporaryConnections.remove(source);
+		notifyObservers();
 	}
 }
