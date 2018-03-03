@@ -3,7 +3,7 @@ package crypto;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class CaesarCrypto {
+public class CaesarCrypto implements Crypto {
 	private int key = 0;
 	private static final CryptoType TYPE = CryptoType.CAESAR;
 	
@@ -20,11 +20,13 @@ public class CaesarCrypto {
 		return encrypted;
 	}
 	
-	public ArrayList<Byte> encrypt(ArrayList<Byte> byteArray) {
-		ArrayList<Byte> encryptedFile = new ArrayList<Byte>(); 
+	public byte[] encrypt(byte[] byteArray) {
+		byte[] encryptedFile = new byte[byteArray.length]; 
+		int i = 0;
 		for (Byte b : byteArray) {
-			byte encrByte = (byte) (((b.intValue() + key + 127) % 256) - 127);
-			encryptedFile.add(encrByte);
+			byte encrByte = (byte) (((b.intValue() + key + 256) % 512) - 256);
+			encryptedFile[i] = encrByte;
+			i++;
 		}
 		return encryptedFile;
 		}
@@ -37,11 +39,13 @@ public class CaesarCrypto {
 		}
 		return decrypted;
 	}
-	public ArrayList<Byte> decrypt(ArrayList<Byte> byteArray) {
-		ArrayList<Byte> decryptedFile = new ArrayList<Byte>(); 
+	public byte[] decrypt(byte[] byteArray) {
+		byte[] decryptedFile = new byte[byteArray.length]; 
+		int i = 0;
 		for (Byte b : byteArray) {
-			byte decrByte = (byte) (((b.intValue() + 127 - key + 256) % 256) - 127);
-			decryptedFile.add(decrByte);
+			byte decrByte = (byte) (((b.intValue() + 256 - key + 512) % 512) - 256);
+			decryptedFile[i] = decrByte;
+			i++;
 		}
 		return decryptedFile;
 		}
@@ -68,7 +72,7 @@ public class CaesarCrypto {
 	 */
 	public static int randomCaesarKey() {
 		Random rdm = new Random();
-		int randomKey = rdm.nextInt(254) + 1; // a max value of key is chosen to not result in the same byte when encrypting bytes. 
+		int randomKey = rdm.nextInt(255) + 1; // a max value of key is chosen to not result in the same byte when encrypting bytes. 
 		return randomKey;
 	}
 

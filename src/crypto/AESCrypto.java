@@ -1,6 +1,5 @@
 package crypto;
 
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.BadPaddingException;
@@ -10,64 +9,66 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
-public class AESCrypto {
+public class AESCrypto implements Crypto {
 	private static final CryptoType TYPE = CryptoType.AES;
 	private Cipher AESCipher;
-	SecretKeySpec AESkey;
+	private static byte[] keyContent;
 	
-	public AESCrypto() {
-		KeyGenerator AESgen;
-		try {
-			AESgen = KeyGenerator.getInstance("AES");
-			SecretKeySpec newKey = (SecretKeySpec) AESgen.generateKey();
-			setKey(AESkey);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}		
+	public AESCrypto(byte[] key) {
+		setKey(key);
 	}
 	
 	public CryptoType getType() {
 		return TYPE;
 	}
 	
-	public void setKey(SecretKeySpec newKey) {
-		AESkey = newKey;
+	public void setKey(byte[] newKey) {
+		keyContent = newKey;
 	}
-
 	
-	public String encrypt(String message) {
-		byte[] dataToEncrypt = message.getBytes();
-		byte[] cipherData;
-		String encrypted = new String();
+	public byte[] generateKey() {
+		byte[] key = null;
 		try {
-			AESCipher = Cipher.getInstance("AES");
-			AESCipher.init(Cipher.ENCRYPT_MODE, AESkey);		
-			cipherData = AESCipher.doFinal(dataToEncrypt);
-			encrypted = new String(cipherData, StandardCharsets.UTF_8);
-		} catch (IllegalBlockSizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			KeyGenerator AESgen = KeyGenerator.getInstance("AES");
+			AESgen.init(128);
+			SecretKeySpec AESkey = (SecretKeySpec) AESgen.generateKey();
+			key = AESkey.getEncoded();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
+		}
+		return key;
+	}
+
+
+	
+	public byte[] encrypt(byte[] byteMessage) {
+		byte[] encrypted = null;
+		try {
+			AESCipher = Cipher.getInstance("AES");
+			SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
+			AESCipher.init(Cipher.ENCRYPT_MODE, AESkey);
+			encrypted = AESCipher.doFinal(byteMessage);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | 
+				IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();			
-		} catch (InvalidKeyException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			e.printStackTrace();
 		}
 		return encrypted;
 	}
 	
-	public String decrypt(String message) {
-		byte[] keyContent = AESkey.getEncoded();
-		String decrypted = new String();
+	public byte[] decrypt(byte[] byteEncrypted) {
+		byte[] decrypted = null;
+		try {
+			SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
+			AESCipher.init(Cipher.DECRYPT_MODE, AESkey);
+			decrypted = AESCipher.doFinal(byteEncrypted);
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return decrypted;
+
 	}
 	
 

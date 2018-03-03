@@ -1,20 +1,30 @@
 import java.util.ArrayList;
 
 public class CaesarTest {
-	public static int key = 256;
+	public static int key = 140;
 
 	public static void main(String[] args) {
 //		String fin = "Hej på er! Jag är 27 år?";
 //		System.out.println(encrypt(fin));
 //		System.out.println(decrypt(encrypt(fin)));
-		ArrayList<Byte> byteArray = new ArrayList<Byte>();
-		byteArray.add((byte) 127);
-		byteArray.add((byte) -5);
-		byteArray.add((byte) -127);
-		byteArray.add((byte) 0);
-		System.out.println(byteArray);
-		System.out.println(encrypt(byteArray));
-		System.out.println(decrypt(encrypt(byteArray)));
+		byte[] byteArray = new byte[4];
+		byteArray[0] = (byte) 127;
+		byteArray[1] = (byte) 1;
+		byteArray[2] = (byte) 0;
+		byteArray[3] = (byte) -23;
+		for (Byte b : byteArray) {
+			System.out.println(b.intValue());
+		}
+		byte [] e = encrypt(byteArray);
+		for (Byte b : e) {
+			System.out.println(b.intValue());
+		}
+		byte[] d = decrypt(e);
+		for (Byte b : d) {
+			System.out.println(b.intValue());
+		}
+		System.out.println((byte) 1);
+		System.out.println((byte) 512);
 		
 		
 	}
@@ -28,11 +38,13 @@ public class CaesarTest {
 		return encrypted;
 		}
 	
-	public static ArrayList<Byte> encrypt(ArrayList<Byte> byteArray) {
-		ArrayList<Byte> encryptedFile = new ArrayList<Byte>(); 
+	public static byte[] encrypt(byte[] byteArray) {
+		byte[] encryptedFile = new byte[byteArray.length]; 
+		int i = 0;
 		for (Byte b : byteArray) {
-			byte encrByte = (byte) (((b.intValue() + key + 127) % 256) - 127);
-			encryptedFile.add(encrByte);
+			byte encrByte = (byte) (((b.intValue() + key + 256) % 512) - 256);
+			encryptedFile[i] = encrByte;
+			i++;
 		}
 		return encryptedFile;
 		}
@@ -46,11 +58,13 @@ public class CaesarTest {
 		return decrypted;
 	}
 	
-	public static ArrayList<Byte> decrypt(ArrayList<Byte> byteArray) {
-		ArrayList<Byte> decryptedFile = new ArrayList<Byte>(); 
+	public static byte[] decrypt(byte[] byteArray) {
+		byte[] decryptedFile = new byte[byteArray.length]; 
+		int i = 0;
 		for (Byte b : byteArray) {
-			byte decrByte = (byte) (((b.intValue() + 127 - key + 256) % 256) - 127);
-			decryptedFile.add(decrByte);
+			byte decrByte = (byte) (((b.intValue() + 256 - key + 512) % 512) - 256);
+			decryptedFile[i] = decrByte;
+			i++;
 		}
 		return decryptedFile;
 		}
