@@ -8,10 +8,10 @@ public class Message {
 	private String myMessage;
 	private String mySender;
 	private Color myColor;
-//	private CryptoType myCryptoType;
+	private CryptoType myCryptoType;
 	
 	/**
-	 * Creates an unencrypted message.
+	 * Creates a message which is/was not encrypted..
 	 * @param source
 	 * @param sendername
 	 * @param message
@@ -23,12 +23,10 @@ public class Message {
 		mySource = source;
 		mySender = sendername;
 		myColor = color;
-		/* Jag blev osäker på om Message ska ha koll på sitt crypto eller
-		 * inte... antagligen inte eftersom vi ska skicka ett krypterat
-		 * meddelande till alla användare oavsett om de har kryptering
-		 * aktiverat eller ej. Men låter denna egenskap vara kvar så länge.
+		/**
+		 * Tracks crypto type for user information.
 		 */
-//		myCryptoType = CryptoType.PLAIN;
+		myCryptoType = CryptoType.PLAIN;
 	}
 	
 	/**
@@ -45,24 +43,25 @@ public class Message {
 		mySource = null;
 	}
 	
-//	/**
-//	 * Creates a message which should be encrypted before being sent over
-//	 * the internet. Note that encryption only occurs if the message is
-//	 * actually transmitted over the net and is done by the User class.
-//	 * @param source
-//	 * @param sendername
-//	 * @param message
-//	 * @param color
-//	 * @param ct
-//	 */
-//	public Message(User source, String sendername, String message,
-//			Color color, CryptoType ct) {
-//		myMessage = message;
-//		mySource = source;
-//		mySender = sendername;
-//		myColor = color;
-//		myCryptoType = ct;
-//	}
+	/**
+	 * Creates a message which was encrypted when it was recieved. Note that
+	 * encrypted messages cannot be sent by calling this constructor. Instead,
+	 * encrypted messages are sent by setting activeCrypto on User.
+	 * @see {@link User}
+	 * @param source
+	 * @param sendername
+	 * @param message
+	 * @param color
+	 * @param ct
+	 */
+	public Message(User source, String sendername, String message,
+			Color color, CryptoType ct) {
+		myMessage = message;
+		mySource = source;
+		mySender = sendername;
+		myColor = color;
+		myCryptoType = ct;
+	}
 	
 	public User getSource() {
 		return mySource;
@@ -80,7 +79,7 @@ public class Message {
 		return myColor;
 	}
 	
-//	public CryptoType getEncryptionType() {
-//		return myCryptoType;
-//	}
+	public CryptoType getCryptoType() {
+		return myCryptoType;
+	}
 }

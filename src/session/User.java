@@ -9,6 +9,8 @@ import javax.xml.stream.*;
 import crypto.*;
 
 public class User implements Runnable {
+	private static int nextID = 0;
+	private final int myID = nextID++;
 	private Socket connection;
 	/** Tracks if have a connection which has been accepted
 	 * by both parties.	 */
@@ -16,7 +18,7 @@ public class User implements Runnable {
 	//TODO: make a set method
 	protected boolean keepTemporaryConnection = true;
 	ArrayList<Request> myRequests = new ArrayList<Request>();
-	ArrayList<Crypto> myCryptos = new ArrayList<Crypto>();
+	Map<CryptoType, Crypto> myCryptos = new TreeMap<CryptoType, Crypto>();
 	/** The username of the remote user or remote server. Note that attempts
 	 * to change username by the remote party are ignored. */
 	private String username; //TODO: this field should be made private, and a getUsername method should be added.
@@ -222,6 +224,9 @@ public class User implements Runnable {
 		for (Request r : myRequests) {
 			r.kill();
 		}
+		for (ConnectionObserver o : observers) {
+			o.userDisconnected(this);
+		}
 	}
 	
 	public void run() {
@@ -232,7 +237,7 @@ public class User implements Runnable {
 						createXMLStreamReader(in);
 				if (connected) {
 					/* connected is set true by accepting ConnectionRequest. */
-					pumpMessages(xmlReader);
+					parseMessages(xmlReader);
 				} else if (keepTemporaryConnection) {
 					temporaryConnectionParse(xmlReader);
 				}
@@ -382,7 +387,7 @@ public class User implements Runnable {
 	 * Parses messages according to the XML communications protocol.
 	 * @param xmlReader XMLStreamReader reading from the input stream.
 	 */
-	private void pumpMessages(XMLStreamReader xmlReader) 
+	private void parseMessages(XMLStreamReader xmlReader) 
 									throws XMLStreamException {
 		/**
 		 * We create this local class to build messages more easily.
@@ -414,15 +419,13 @@ public class User implements Runnable {
 				String message = messageBuilder.toString();
 				Message newMessage;
 				Color cOut = Color.decode(hexColor);
-// These lines commented out until we know that they can be removed safely.
-//				if (ct == null) {
-// The next line should never be commented out.
-				newMessage = new Message(source, sender, message, cOut);
-//				}
-//				else {
-//					newMessage = new Message(source, sender, message, cOut,
-//							ct);
-//				}
+				if (ct == null) {
+					newMessage = new Message(source, sender, message, cOut);
+				}
+				else {
+					newMessage = new Message(source, sender, message, cOut,
+							ct);
+				}
 				return newMessage;
 			}
 		}
@@ -444,6 +447,10 @@ public class User implements Runnable {
 					break;
 				case "text":
 					mb.hexColor = xmlReader.getAttributeValue(null,	"color");
+					break;
+				case "encrypted":
+					/* TODO: save the crypto type into mb.ct */
+					//mb.messageBuilder
 					break;
 				case "disconnect":
 					fireUserNotificationEvent(username + " disconnected.");
@@ -644,6 +651,23 @@ public class User implements Runnable {
 		}
 		fireUserNotificationEvent("Lost connection to " + name + ".");
 		disconnect();
+	}
+	
+	/**
+	 * Gets the instance-unique ID number of the User. Useful for
+	 * identification in view.
+	 * @return the id number of the instance
+	 */
+	public int getID() {
+		return myID;
+	}
+	
+	public String getInetAdress(boolean includePort) {
+		String toReturn = connection.getInetAddress().toString();
+		if (includePort) {
+			toReturn += ":" + connection.getLocalPort();
+		}
+		return toReturn;
 	}
 
 }

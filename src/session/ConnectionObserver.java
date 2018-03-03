@@ -22,4 +22,6 @@ interface ConnectionObserver {
 	 * @param message - the message to be written to the log.
 	 */
 	public void newNotification(User source, String message);
+	
+	public void userDisconnected(User source);
 }
