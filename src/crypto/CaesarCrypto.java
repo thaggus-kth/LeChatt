@@ -1,10 +1,11 @@
 package crypto;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class CaesarCrypto {
 	private int key = 0;
-	private static CryptoType TYPE;
+	private static final CryptoType TYPE = CryptoType.CAESAR;
 	
 	public CaesarCrypto(int key) {
 		setKey(key);
@@ -19,10 +20,14 @@ public class CaesarCrypto {
 		return encrypted;
 	}
 	
-	public byte[] encrypt(byte[] b) {
-		byte[] encryptedFile = new byte[0]; 
+	public ArrayList<Byte> encrypt(ArrayList<Byte> byteArray) {
+		ArrayList<Byte> encryptedFile = new ArrayList<Byte>(); 
+		for (Byte b : byteArray) {
+			byte encrByte = (byte) (((b.intValue() + key + 127) % 256) - 127);
+			encryptedFile.add(encrByte);
+		}
 		return encryptedFile;
-	}
+		}
 	
 	public String decrypt(String message) {
 		String decrypted = new String();
@@ -32,10 +37,14 @@ public class CaesarCrypto {
 		}
 		return decrypted;
 	}
-	public byte[] decrypt(byte[] b) {
-		byte[] decrFile;
-		return decrFile;
-	}
+	public ArrayList<Byte> decrypt(ArrayList<Byte> byteArray) {
+		ArrayList<Byte> decryptedFile = new ArrayList<Byte>(); 
+		for (Byte b : byteArray) {
+			byte decrByte = (byte) (((b.intValue() + 127 - key + 256) % 256) - 127);
+			decryptedFile.add(decrByte);
+		}
+		return decryptedFile;
+		}
 	
 	/**
 	 * Sets the encryption key

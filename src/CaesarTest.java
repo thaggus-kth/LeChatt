@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 public class CaesarTest {
-	public static int key = 255;
+	public static int key = 256;
 
 	public static void main(String[] args) {
 //		String fin = "Hej på er! Jag är 27 år?";
@@ -31,7 +31,7 @@ public class CaesarTest {
 	public static ArrayList<Byte> encrypt(ArrayList<Byte> byteArray) {
 		ArrayList<Byte> encryptedFile = new ArrayList<Byte>(); 
 		for (Byte b : byteArray) {
-			byte encrByte = (byte) (((b.intValue() + key + 127) % 255) - 127);
+			byte encrByte = (byte) (((b.intValue() + key + 127) % 256) - 127);
 			encryptedFile.add(encrByte);
 		}
 		return encryptedFile;
@@ -49,7 +49,7 @@ public class CaesarTest {
 	public static ArrayList<Byte> decrypt(ArrayList<Byte> byteArray) {
 		ArrayList<Byte> decryptedFile = new ArrayList<Byte>(); 
 		for (Byte b : byteArray) {
-			byte decrByte = (byte) (((b.intValue() + 127 - key + 255) % 255) - 127);
+			byte decrByte = (byte) (((b.intValue() + 127 - key + 256) % 256) - 127);
 			decryptedFile.add(decrByte);
 		}
 		return decryptedFile;
