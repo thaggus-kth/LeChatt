@@ -221,7 +221,7 @@ public class SessionController implements ConnectionObserver {
 	public void sendKeyRequest(int userID, CryptoType c, String message) {
 		User receiver = getUserByID(userID);
 		receiver.sendKeyRequest(c, message);
-		}
+	}
 	
 	
 	/**

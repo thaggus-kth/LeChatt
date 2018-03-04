@@ -5,8 +5,7 @@ import crypto.*;
 public class OutgoingKeyRequest extends KeyRequest {
 
 	private boolean keyWasSet = false;
-	private int key = 0;
-	private byte[] AESkey = null;
+	private String key = null;
 	
 	public OutgoingKeyRequest(User user, String message, CryptoType ct) {
 		super(user, message, ct);
@@ -25,8 +24,9 @@ public class OutgoingKeyRequest extends KeyRequest {
 			throw new NoKeyException();
 		}
 		switch (getCryptoType()) {
+		case PLAIN:
 		case AES:
-			newCrypto = new AESCrypto(AESkey);
+			newCrypto = new AESCrypto(key);
 			break;
 		case CAESAR:
 			newCrypto = new CaesarCrypto(key);
@@ -43,13 +43,8 @@ public class OutgoingKeyRequest extends KeyRequest {
 	 * else accept will throw an exception!
 	 * @param key
 	 */
-	public void setCaesarKey(int key) {
+	public void setKey(String key) {
 		this.key = key;
-		keyWasSet = true;
-	}
-	
-	public void setAESKey(byte[] key) {
-		AESkey = key;
 		keyWasSet = true;
 	}
 

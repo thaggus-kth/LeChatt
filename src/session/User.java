@@ -449,14 +449,46 @@ public class User implements Runnable {
 					mb.hexColor = xmlReader.getAttributeValue(null,	"color");
 					break;
 				case "encrypted":
-					String type = xmlReader.getAttributeValue(null, "type");
-					mb.ct = CryptoType.valueOf(type);
+					mb.ct = CryptoType.valueOf(xmlReader.getAttributeValue(null, "type"));
 					break;
 				case "disconnect":
 					fireUserNotificationEvent(username + " disconnected.");
 					disconnect();
 					break;
 				case "keyrequest":
+					if (xmlReader.getAttributeCount() > 1) {
+						/* There is a reply
+						 */
+						String reply = xmlReader.getAttributeValue(
+								null, "reply");
+						Request wanted = null;
+						for (Request r : myRequests) {
+							if (r instanceof OutgoingKeyRequest) {
+								wanted = r;
+							}
+						}
+						if (wanted != null) {
+							switch (reply.toLowerCase()) {
+							case "yes":
+								((OutgoingKeyRequest) wanted).setKey(xmlReader.getAttributeValue(null, "key"));
+								wanted.accept(xmlReader.getElementText());
+								break;
+							case "no":
+								wanted.deny(xmlReader.getElementText());
+								break;
+							}
+						}
+					} else {
+						/* This is an incoming key request. */
+						String crType = xmlReader.getAttributeValue(null, "type");
+						mb.ct = CryptoType.valueOf(crType);
+						if (myCryptos.containsKey(mb.ct)) {
+							Request IncKeyReq = new IncomingKeyRequest(this, mb.message, mb.ct);
+							fireNewRequestEvent(IncKeyReq);
+						} 
+						break;
+					}
+					break;
 				case "filerequest":
 					System.err.println("Got unimplemented request "
 							+ "from " + username);
@@ -512,8 +544,20 @@ public class User implements Runnable {
 	}
 	
 	public void sendKeyRequest(CryptoType c, String message) {
-		Request keyRequest = new OutgoingKeyRequest( this, message, c);
+		Request keyRequest = new OutgoingKeyRequest(this, message, c);
 		myRequests.add(keyRequest);
+		try {
+			xmlOutputMessageHeader(defaultSender);
+			xmlOut.writeStartElement("keyrequest");
+			xmlOut.writeAttribute("type", c.toString());
+			xmlOut.writeCharacters(message);
+			xmlOut.writeEndDocument();
+			fireUserNotificationEvent("Sent key request to "
+								+ connection.getInetAddress() + ".");
+		} catch (XMLStreamException e) {
+			fireUserNotificationEvent("Couldn't send key request to "
+									+ connection.getInetAddress() + ": " + e);
+		}
 	}
 	
 //	public void sendFileRequest(File file, CryptoType c, String message) {

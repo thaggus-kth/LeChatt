@@ -6,6 +6,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 
 import crypto.CryptoType;
 
@@ -31,14 +32,34 @@ public class AEStest {
 	private static byte[] keyContent;
 
 	public static void main(String[] args) throws Exception {
-		String str = "hej och hallå!";
-		// Skapa nyckel
 		keyContent = generateKey();
-			String e = encrypt(str);
-			System.out.println("Encrypted: " + e);		
-			String d = decrypt(e);
+		
+
+		byte[] byteArray = new byte[4];
+		byteArray[0] = (byte) 127;
+		byteArray[1] = (byte) 1;
+		byteArray[2] = (byte) 0;
+		byteArray[3] = (byte) -23;
+		System.out.println("Bytes");
+		for (Byte b : byteArray) {
+			System.out.println(b.intValue());
+		}
+		byte [] enc = encrypt(byteArray);
+		System.out.println("Encrypted Bytes");
+		for (Byte b : enc) {
+			System.out.println(b.intValue());
+		}
+		byte[] dec = decrypt(enc);
+		System.out.println("Decrypted Bytes");
+		for (Byte b : dec) {
+			System.out.println(b.intValue());
+		}
+		//String str = "Hur är laget?";
+			//String e = encrypt(str);
+			//System.out.println("Encrypted: " + new String(e));		
+			//String d = decrypt(e);
 			//Avkryptera
-			System.out.println("Decrypted: " + d);
+			//System.out.println("Decrypted: " + d);
 			
 			
 		}
@@ -50,23 +71,60 @@ public class AEStest {
 		byte[] key = AESkey.getEncoded();
 		return key;
 	}
+	public static byte[] encrypt(byte[] plainText) throws Exception {
+		AEScipher = Cipher.getInstance("AES");
+		SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
+		AEScipher.init(Cipher.ENCRYPT_MODE, AESkey);
+		byte[] cipherData = AEScipher.doFinal(plainText);
+		return cipherData;
+	}
+	
+	public static byte[] decrypt(byte[] cipher) throws Exception {
+		SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
+		AEScipher.init(Cipher.DECRYPT_MODE, AESkey);
+		byte[] bytePlainText = AEScipher.doFinal(cipher);
+		return bytePlainText;
+	}
 	
 	public static String encrypt(String plainText) throws Exception {
-//		byte[] encryptMe = Base64.getMimeDecoder().decode(plainText);
 		AEScipher = Cipher.getInstance("AES");
 		SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 		AEScipher.init(Cipher.ENCRYPT_MODE, AESkey);
 		byte[] cipherData = AEScipher.doFinal(plainText.getBytes());
 		byte[] encrypted =  Base64.getEncoder().encode(cipherData);
-		return new String(encrypted);
+		return new String(byteToHex(encrypted));
 	}
+	
+	
+	public static String byteToHex(byte[] byteArray) {
+	    String hexString = DatatypeConverter.printHexBinary(byteArray);
+	    return hexString;
+	}
+	
+	/**
+	 * From https://stackoverflow.com/questions/140131/convert-a-string-
+	 * representation-of-a-hex-dump-to-a-byte-array-using-java
+	 * @param s
+	 * @return
+	 */
+	public static byte[] hexStringToByteArray(String s) {
+		int len = s.length();
+	    byte[] data = new byte[len / 2];
+	    for (int i = 0; i < len; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+	                             + Character.digit(s.charAt(i+1), 16));
+	    }
+	    return data;
+	}
+	
 	
 	public static void setKey(byte[] newKey) {
 		keyContent = newKey;
 	}
 	
 	public static String decrypt(String cipher) throws Exception {
-		byte[] decryptMe = Base64.getDecoder().decode(cipher.getBytes());
+		byte[] hex = hexStringToByteArray(cipher);
+		byte[] decryptMe = Base64.getDecoder().decode(hex);
 		SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 		AEScipher.init(Cipher.DECRYPT_MODE, AESkey);
 		byte[] bytePlainText = AEScipher.doFinal(decryptMe);
