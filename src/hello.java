@@ -20,5 +20,7 @@ public class hello {
 	public void ebbasMetod() {
 		System.out.println("hej");
 	}
+	
+	
 
 }
