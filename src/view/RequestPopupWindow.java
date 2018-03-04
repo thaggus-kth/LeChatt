@@ -72,8 +72,18 @@ public class RequestPopupWindow extends JDialog
 			} else {
 				sb.append(".\n");
 			}
-		//} else if (r instanceof KeyRequest) {
-			//lägg till saker
+		} else if (r instanceof IncomingKeyRequest) {
+			sb.append("Användaren ");
+			sb.append(r.getUsername());
+			sb.append(" vill skicka krypterade meddelanden till dig med kryptot ");
+			sb.append(((KeyRequest) r).getCryptoType());
+			if (!(r.getMessage() == null)) {
+				sb.append(" och hälsar:\n\"");
+				sb.append(r.getMessage());
+				sb.append("\"\n");
+			} else {
+				sb.append(".\n");
+			}
 		} else {
 			sb.append("Okänd request\nFrån: ");
 			try {

@@ -13,14 +13,18 @@ public class CaesarCrypto implements Crypto {
 		setKey(key);
 	}
 	
+	public CaesarCrypto() {
+		key = randomCaesarKey();
+	}
+	
 	public String encrypt(String message) {
-		
 		String encrypted = new String();
 		char[] charArray = message.toCharArray();
 		for (char c : charArray) {
 			encrypted += (char) ((c + key) % 65533);
 		}
-		return encrypted;
+		String hexEncrypted = byteArrayToHex(encrypted.getBytes());
+		return hexEncrypted;
 	}
 	
 	public byte[] encrypt(byte[] byteArray) {
@@ -34,8 +38,9 @@ public class CaesarCrypto implements Crypto {
 		return encryptedFile;
 		}
 	
-	public String decrypt(String message) {
+	public String decrypt(String hexMessage) {
 		String decrypted = new String();
+		String message = new String(hexStringToByteArray(hexMessage));
 		char[] charArray = message.toCharArray();
 		for (char c : charArray) {
 			decrypted += (char) ((c + 65533 - key) % 65533);
@@ -58,11 +63,14 @@ public class CaesarCrypto implements Crypto {
 	 * @param newKey new encryption key
 	 */
 	public void setKey(String newKey) {
-		key = Integer.decode(newKey);
+		key = Integer.parseInt(newKey, 16);
 	}
 	
-	public void getKey() {
-		return 
+	/**
+	 * Returns the key as a hex string
+	 */
+	public String getKey() {
+		return Integer.toHexString(key);
 	}
 	
 	/**
@@ -77,7 +85,7 @@ public class CaesarCrypto implements Crypto {
 	 * Returns a random Caesar Crypto key.
 	 * @return random integer key between 1 and 29. 
 	 */
-	public static int randomCaesarKey() {
+	public int randomCaesarKey() {
 		Random rdm = new Random();
 		int randomKey = rdm.nextInt(255) + 1; // a max value of key is chosen to not result in the same byte when encrypting bytes. 
 		return randomKey;
@@ -94,7 +102,7 @@ public class CaesarCrypto implements Crypto {
 	 * @param s
 	 * @return
 	 */
-	public static byte[] hexStringToCharArray(String s) {
+	public byte[] hexStringToByteArray(String s) {
 		int len = s.length();
 	    byte[] data = new byte[len / 2];
 	    for (int i = 0; i < len; i += 2) {

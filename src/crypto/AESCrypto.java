@@ -21,12 +21,20 @@ public class AESCrypto implements Crypto {
 		setKey(key);
 	}
 	
+	public AESCrypto() {
+		keyContent = generateKey();
+	}
+	
 	public CryptoType getType() {
 		return TYPE;
 	}
 	
 	public void setKey(String newHexKey) {
 		keyContent = hexStringToByteArray(newHexKey);
+	}
+	
+	public String getKey() {
+		return byteArrayToHex(keyContent);
 	}
 	
 	public byte[] generateKey() {

@@ -98,7 +98,8 @@ public class User implements Runnable {
 					colorToHex(toSend.getColor()));
 			if (activeCrypto != null) {
 				xmlOut.writeStartElement("encrypted");
-				//TODO: Implement encryption
+				xmlOut.writeAttribute("type", activeCrypto.getType().toString());
+				xmlOut.writeCharacters(activeCrypto.encrypt(toSend.getMessage()));
 			} else {
 				/* This if statement is just to prove that we can handle <fetstil> */
 //				if (toSend.getMessage().contains("awesome")) {
@@ -432,6 +433,7 @@ public class User implements Runnable {
 		
 		/* Begin XML parsing section. */
 		boolean messageEnded = false;
+		boolean messageEncrypted = false;
 		MessageBuilder mb = new MessageBuilder();
 		while (!messageEnded) {
 			/* The next statement blocks (i.e. the program waits)
@@ -450,12 +452,15 @@ public class User implements Runnable {
 					break;
 				case "encrypted":
 					mb.ct = CryptoType.valueOf(xmlReader.getAttributeValue(null, "type"));
+					messageEncrypted = true;
 					break;
 				case "disconnect":
 					fireUserNotificationEvent(username + " disconnected.");
 					disconnect();
 					break;
 				case "keyrequest":
+					String crType = xmlReader.getAttributeValue(null, "type");
+					mb.ct = CryptoType.valueOf(crType);
 					if (xmlReader.getAttributeCount() > 1) {
 						/* There is a reply
 						 */
@@ -470,7 +475,8 @@ public class User implements Runnable {
 						if (wanted != null) {
 							switch (reply.toLowerCase()) {
 							case "yes":
-								((OutgoingKeyRequest) wanted).setKey(xmlReader.getAttributeValue(null, "key"));
+								String hexKey = xmlReader.getAttributeValue(null, "key");
+								((OutgoingKeyRequest) wanted).setKey(hexKey);
 								wanted.accept(xmlReader.getElementText());
 								break;
 							case "no":
@@ -480,13 +486,9 @@ public class User implements Runnable {
 						}
 					} else {
 						/* This is an incoming key request. */
-						String crType = xmlReader.getAttributeValue(null, "type");
-						mb.ct = CryptoType.valueOf(crType);
-						if (myCryptos.containsKey(mb.ct)) {
-							Request IncKeyReq = new IncomingKeyRequest(this, mb.message, mb.ct);
-							fireNewRequestEvent(IncKeyReq);
-						} 
-						break;
+						Request incKeyReq = new IncomingKeyRequest(this, mb.message, mb.ct);
+						myRequests.add(incKeyReq);
+						fireNewRequestEvent(incKeyReq); 
 					}
 					break;
 				case "filerequest":
@@ -500,7 +502,11 @@ public class User implements Runnable {
 				/* Note: we can avoid invoking this case by using getElementText
 				 * for special cases (like request messages)
 				 */
-				mb.messageBuilder.append(xmlReader.getText());
+				if (messageEncrypted) {
+					mb.messageBuilder.append(myCryptos.get(mb.ct).decrypt(xmlReader.getText()));
+				} else {
+					mb.messageBuilder.append(xmlReader.getText());
+				}
 				break;
 			case XMLStreamConstants.END_ELEMENT:
 				switch (xmlReader.getLocalName()) {
@@ -514,6 +520,7 @@ public class User implements Runnable {
 						fireMessageEvent(mb.toMessage(this));
 					}
 					messageEnded = true;
+					break;
 				}
 				break;
 			case XMLStreamConstants.END_DOCUMENT: //adding this for robustness
@@ -553,10 +560,10 @@ public class User implements Runnable {
 			xmlOut.writeCharacters(message);
 			xmlOut.writeEndDocument();
 			fireUserNotificationEvent("Sent key request to "
-								+ connection.getInetAddress() + ".");
+					+ connection.getInetAddress().getHostAddress() + ".");
 		} catch (XMLStreamException e) {
 			fireUserNotificationEvent("Couldn't send key request to "
-									+ connection.getInetAddress() + ": " + e);
+				+ connection.getInetAddress().getHostAddress() + ": " + e);
 		}
 	}
 	
@@ -566,14 +573,22 @@ public class User implements Runnable {
 //	}
 	
 	public void setActiveCrypto(CryptoType c) {
-		switch (c) {
-			case CAESAR:
-				//activeCrypto = CaesarCrypto;
-				break;
-			case AES:
-				//activeCrypto = AESCrypto;
-				break;
+		if (c == CryptoType.PLAIN) {
+			activeCrypto = null;
+		} else {
+			activeCrypto = myCryptos.get(c);
 		}
+	}
+	
+	/**
+	 * Returns the currently active crypto type.
+	 */
+	public CryptoType getActiveCrypto() {
+		CryptoType ct = CryptoType.PLAIN;
+		if (activeCrypto != null) {
+			ct = activeCrypto.getType();
+		}
+		return ct;
 	}
 	
 	public void sendConnectRequest(String message) {

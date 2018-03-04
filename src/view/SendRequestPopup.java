@@ -126,10 +126,13 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 				if (mySession.checkCryptoAvailable(myUserID, ct)) {
 					cryptoSelection.addItem(ct.toString());
 				}
-			} else if (myType == SupportedRequests.KEY_REQUEST){
+			} else if (ct != CryptoType.PLAIN && 
+					myType == SupportedRequests.KEY_REQUEST){
 				cryptoSelection.addItem(ct.toString());
 			}
 		}
+		selectedCryptoType = CryptoType.valueOf(
+					(String) cryptoSelection.getSelectedItem());
 		cryptoSelection.addActionListener(new ActionListener() {
 
 			@Override

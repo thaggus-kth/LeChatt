@@ -25,16 +25,21 @@ public class OutgoingKeyRequest extends KeyRequest {
 		}
 		switch (getCryptoType()) {
 		case PLAIN:
+			break;
 		case AES:
 			newCrypto = new AESCrypto(key);
 			break;
 		case CAESAR:
 			newCrypto = new CaesarCrypto(key);
+			break;
 		}
 		getUser().myCryptos.put(getCryptoType(), newCrypto);
-		getUser().fireUserNotificationEvent("(name) accepted"
-				+ "your key request for (ct). you can now select (ct) from the"
-				+ "crypto list!");
+		getUser().setActiveCrypto(newCrypto.getType());
+		getUser().fireUserNotificationEvent(String.format("%s accepted"
+				+ "your key request for %s. You can now select %s from the "
+				+ "crypto list!", getUsername(), getCryptoType(),
+				getCryptoType()));
+		clean();
 	}
 	
 	/**

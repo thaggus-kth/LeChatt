@@ -1,6 +1,7 @@
 package session;
 
 import crypto.*;
+import session.OutgoingKeyRequest.NoKeyException;
 
 public class IncomingKeyRequest extends KeyRequest {
 	private String myMessage = null;
@@ -17,32 +18,47 @@ public class IncomingKeyRequest extends KeyRequest {
 
 	@Override
 	public void accept(String message) {
-		Crypto myCrypto = myUser.myCryptos.get(ct);
-		String key = myCrypto.key;
-		String acceptTag = "<keyRequest reply=\"yes\" type=\"" +
-				getCryptoType().toString()+ "\"" + "key=\"" +
-				message + "</request>";
+		Crypto newCrypto = null;
+		switch (getCryptoType()) {
+		case PLAIN:
+			break;
+		case AES:
+			newCrypto = new AESCrypto();
+			break;
+		case CAESAR:
+			newCrypto = new CaesarCrypto();
+			break;
+		}
+		getUser().myCryptos.put(getCryptoType(), newCrypto);
+		getUser().setActiveCrypto(newCrypto.getType());
+		String acceptTag = "<keyrequest reply=\"yes\" type=\"" +
+				getCryptoType().toString() + "\"" + " key=\"" + newCrypto.getKey() + "\"" + ">" +
+				message + "</keyrequest>"; 
 		disableTimeOut();
 		myUser.writeLine(acceptTag);
-		//done
+		myUser.fireUserNotificationEvent(String.format(
+				"You can now choose %s encryption for user %s",
+				getCryptoType(), getUsername()));
+		clean();
 	}
 
 	@Override
 	public void deny(String message) {
-		// TODO Auto-generated method stub
-
+		getUser().writeLine("<keyrequest reply=\"no\">" + message
+				+ "</keyrequest>");
+		clean();
 	}
 
 	@Override
 	protected void timeOut() {
-		// TODO Auto-generated method stub
-
+		String msg = String.format("The request from %s to receive a crypto key, timed out.", getUser().getUsername());
+		getUser().fireUserNotificationEvent(msg);
+		clean();
 	}
 
 	@Override
 	protected void kill() {
-		// TODO Auto-generated method stub
-
+		//TODO: implement?
 	}
 	
 	public void setMessage(String messageIn) {
@@ -50,6 +66,11 @@ public class IncomingKeyRequest extends KeyRequest {
 			throw new IllegalArgumentException("Message already set!");
 		}
 		myMessage = messageIn;
+	}
+	
+	private void clean() {
+		disableTimeOut();
+		getUser().myRequests.remove(this);
 	}
 
 }

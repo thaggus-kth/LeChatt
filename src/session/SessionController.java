@@ -244,6 +244,10 @@ public class SessionController implements ConnectionObserver {
 		return u.myCryptos.keySet().toArray(new CryptoType[0]);
 	}
 	
+	public CryptoType getActiveCrypto(int userID) {
+		return getUserByID(userID).getActiveCrypto();
+	}
+	
 	/**
 	 * Sets active crypto for specified user
 	 * @param user whose crypto is changed

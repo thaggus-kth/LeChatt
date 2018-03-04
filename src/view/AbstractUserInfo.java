@@ -68,6 +68,7 @@ public abstract class AbstractUserInfo extends JPanel implements ChatObserver,
 	abstract public String getSessionInfoText();
 	
 	private void updateCryptoSelection() {
+		cryptoSelection.removeActionListener(this);
 		cryptoSelection.removeAllItems();
 		if (selectedID == NO_SELECTION) {
 			cryptoSelection.setEnabled(false);
@@ -78,7 +79,9 @@ public abstract class AbstractUserInfo extends JPanel implements ChatObserver,
 				cryptoSelection.addItem(ct.toString());
 			}
 			cryptoSelection.addItem(SEND_REQUEST_STRING);
+			selectActiveCrypto();
 			cryptoSelection.addActionListener(this);
+			
 		}
 	}
 	
@@ -99,7 +102,7 @@ public abstract class AbstractUserInfo extends JPanel implements ChatObserver,
 					new SendRequestPopup((JFrame) window, session,
 							SendRequestPopup.SupportedRequests.KEY_REQUEST,
 							selectedID);
-					cryptoSelection.setSelectedItem(NO_ENCRYPTION_STRING);	
+					selectActiveCrypto();	
 					break;
 				default:
 					session.setCrypto(selectedID,
@@ -126,11 +129,23 @@ public abstract class AbstractUserInfo extends JPanel implements ChatObserver,
 	public void updateView() {
 		usernameList.updateRelativeTo(session.getUsernamesAndIDs());
 		infoArea.setText(getSessionInfoText());
+		refreshCryptoSelection();
 	}
 	
 	public void refreshCryptoSelection() {
 		if (selectedID != NO_SELECTION) {
 			updateCryptoSelection();
+		}
+	}
+	
+	public void selectActiveCrypto() {
+		if (selectedID != NO_SELECTION) {
+			CryptoType active = session.getActiveCrypto(selectedID);
+			if (active == CryptoType.PLAIN) {
+				cryptoSelection.setSelectedItem(NO_ENCRYPTION_STRING);
+			} else {
+				cryptoSelection.setSelectedItem(active.toString());
+			}
 		}
 	}
 		

@@ -1,13 +1,20 @@
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Random;
+
+import javax.xml.bind.DatatypeConverter;
 
 public class CaesarTest {
 	public static int key;
 
-	public static void main(String[] args) {
-		String hexKey = Integer.toHexString(5);
-		setKey(hexKey);
-		String fin = "Hej på er! Jag är 27 år?";
+	public static void main(String[] args) throws UnsupportedEncodingException {
+		//String hexKey = Integer.toHexString(5);
+		int rkey = randomCaesarKey();
+		String sKey = Integer.toHexString(rkey);
 		
+		setKey(sKey);
+		String fin = "Hej på er! Jag är 27 år?";
+////		
 		System.out.println(encrypt(fin));
 		System.out.println(decrypt(encrypt(fin)));
 //		byte[] byteArray = new byte[4];
@@ -30,17 +37,24 @@ public class CaesarTest {
 //		System.out.println((byte) 512);
 	}
 	
-	public static void setKey(String newKey) {
-		key = Integer.decode(newKey);
+	public static int randomCaesarKey() {
+		Random rdm = new Random();
+		int randomKey = rdm.nextInt(255) + 1; // a max value of key is chosen to not result in the same byte when encrypting bytes. 
+		return randomKey;
 	}
 	
-	public static String encrypt(String message) {
+	public static void setKey(String newKey) {
+		key = Integer.parseInt(newKey, 16);
+	}
+	
+	public static String encrypt(String message) throws UnsupportedEncodingException {
 		String encrypted = new String();
 		char[] charArray = message.toCharArray();
 		for (char c : charArray) {
 			encrypted += (char) ((c + key) % 65533);
 		}
-		return encrypted;
+		String hexEncrypted = byteArrayToHex(encrypted.getBytes());
+		return hexEncrypted;
 		}
 	
 	public static byte[] encrypt(byte[] byteArray) {
@@ -54,8 +68,9 @@ public class CaesarTest {
 		return encryptedFile;
 		}
 	
-	public static String decrypt(String message) {
+	public static String decrypt(String hexMessage) {
 		String decrypted = new String();
+		String message = new String(hexStringToByteArray(hexMessage));
 		char[] charArray = message.toCharArray();
 		for (char c : charArray) {
 			decrypted += (char) ((c + 65533 - key) % 65533);
@@ -73,5 +88,26 @@ public class CaesarTest {
 		}
 		return decryptedFile;
 		}
+	
+	public static String byteArrayToHex(byte[] byteArray) {
+	    String hex = DatatypeConverter.printHexBinary(byteArray);
+	    return hex;
+	}
+	
+	/**
+	 * From https://stackoverflow.com/questions/140131/convert-a-string-
+	 * representation-of-a-hex-dump-to-a-byte-array-using-java
+	 * @param s
+	 * @return
+	 */
+	public static byte[] hexStringToByteArray(String s) {
+		int len = s.length();
+	    byte[] data = new byte[len / 2];
+	    for (int i = 0; i < len; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+	                             + Character.digit(s.charAt(i+1), 16));
+	    }
+	    return data;
+	}
 }
 	
