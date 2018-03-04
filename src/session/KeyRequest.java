@@ -19,5 +19,4 @@ public abstract class KeyRequest extends Request {
 	public CryptoType getCryptoType() {
 		return cryptoType;
 	}
-
 }

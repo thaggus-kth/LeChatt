@@ -213,18 +213,18 @@ public class SessionController implements ConnectionObserver {
 	
 	
 	/**
-	 * Creates a Outgoing keyrequest object and forwards it to the newRequest method
+	 * Creates a Outgoing keyrequest object.
 	 * @param userID ID of User to receive the request
 	 * @param c	Crypto for which a key is requested
 	 * @param message Text message accompanying the request
 	 */
 	public void sendKeyRequest(int userID, CryptoType c, String message) {
 		User receiver = getUserByID(userID);
-// Uncomment when keyrequest is implemented
-//		Request keyRequest = new OutgoingKeyRequest(Request.DEFAULT_LIFETIME, message, receiver, c);
-//		newRequest(keyRequest);
-//		}
-	}
+		Request keyRequest = new OutgoingKeyRequest(receiver, message, c);
+		receiver.fireNewRequestEvent(keyRequest);
+		System.out.println("keyRequest sent");
+		}
+	
 	
 	/**
 	 * Checks whether the specified user can encrypt/decrypt the specified crypto

@@ -330,7 +330,7 @@ public class User implements Runnable {
 							}
 						}
 					}
-					break;
+					break;	
 				case "disconnect":
 					String msg = "User ";
 					if (username != null && !username.isEmpty()) {
@@ -449,8 +449,8 @@ public class User implements Runnable {
 					mb.hexColor = xmlReader.getAttributeValue(null,	"color");
 					break;
 				case "encrypted":
-					/* TODO: save the crypto type into mb.ct */
-					//mb.messageBuilder
+					String type = xmlReader.getAttributeValue(null, "type");
+					mb.ct = CryptoType.valueOf(type);
 					break;
 				case "disconnect":
 					fireUserNotificationEvent(username + " disconnected.");

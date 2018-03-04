@@ -8,6 +8,10 @@ public class OutgoingKeyRequest extends KeyRequest {
 	private int key = 0;
 	private byte[] AESkey = null;
 	
+	public OutgoingKeyRequest(User user, String message, CryptoType ct) {
+		super(user, message, ct);
+	}
+	
 	@Override
 	/**
 	 * Creates a new Crypto and puts it in the User's myCryptos list.
