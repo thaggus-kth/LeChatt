@@ -13,6 +13,9 @@ public class IncomingFileRequest extends FileRequest implements ProgressObserver
 	private String fileName;
 	private FileReciever fileReciever = null;
 	private File destination = null;
+	private ProgressorProxy progressorProxy = new ProgressorProxy();
+	private Progressor progressor = progressorProxy;
+	
 	
 	public IncomingFileRequest(User u, String message, CryptoType ct,
 			String incomingFileName, long incomingFileSize) {
@@ -45,10 +48,10 @@ public class IncomingFileRequest extends FileRequest implements ProgressObserver
 	 * interface, for visualization by view. Note that calling this before
 	 * any call to accept() will return null.
 	 * @return Progessor representation of the FileReciever if the recieving 
-	 * process has started. Null otherwise.
+	 * process has started, or a proxy otherwise.
 	 */
 	public Progressor getFileSender() {
-		return fileReciever;
+		return progressor;
 	}
 	
 	@Override
@@ -74,6 +77,8 @@ public class IncomingFileRequest extends FileRequest implements ProgressObserver
 		try {
 			fileReciever = new FileReciever(destination, cryptoToUse, fileSize);
 			fileReciever.addObserver(this);
+			progressorProxy.realProgressorAvailable(fileReciever);
+			progressor = fileReciever;
 			response = String.format("<fileresponse reply=\"yes\" "
 					+ "port=\"%d\">",
 					fileReciever.getPort());

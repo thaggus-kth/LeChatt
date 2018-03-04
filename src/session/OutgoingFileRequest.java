@@ -13,6 +13,8 @@ public class OutgoingFileRequest extends FileRequest
 
 	private File myFile;
 	private FileSender mySender;
+	private ProgressorProxy progressorProxy = new ProgressorProxy();
+	private Progressor progressor = progressorProxy;
 	private static final int UNSPECIFIED_PORT = -1;
 	private int port = UNSPECIFIED_PORT;
 	/**
@@ -24,7 +26,7 @@ public class OutgoingFileRequest extends FileRequest
 	public OutgoingFileRequest(User user, String message, CryptoType ct,
 			File f) {
 		super(user, message, ct);
-		f = myFile;
+		myFile = f;
 	}
 
 	/**
@@ -44,7 +46,7 @@ public class OutgoingFileRequest extends FileRequest
 
 	@Override
 	public long getFileSize() {
-		return myFile.getTotalSpace();
+		return myFile.length();
 	}
 	
 	/**
@@ -89,6 +91,8 @@ public class OutgoingFileRequest extends FileRequest
 			mySender = new FileSender(myFile, myUser.getInetAdress(false),
 					port, cryptoToUse);
 			mySender.addObserver(this);
+			progressorProxy.realProgressorAvailable(mySender);
+			progressor = mySender;
 		} catch (IOException e) {
 			String errMsg = String.format("Could not start transfer of file %s"
 					+ "to user %s: " + e.getMessage() + "\nPlease try again.",
@@ -106,7 +110,7 @@ public class OutgoingFileRequest extends FileRequest
 	 * process has started. Null otherwise.
 	 */
 	public Progressor getFileSender() {
-		return mySender;
+		return progressor;
 	}
 
 	@Override
@@ -118,6 +122,7 @@ public class OutgoingFileRequest extends FileRequest
 		} else {
 			notification +=  " with the message \"" + message + "\"";
 		}
+		awaitingReply = false;
 		getUser().fireUserNotificationEvent(notification);
 		clean();
 	}

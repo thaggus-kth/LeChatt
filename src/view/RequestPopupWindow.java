@@ -1,6 +1,8 @@
 package view;
 
 import java.awt.event.*;
+import java.text.DecimalFormat;
+
 import javax.swing.*;
 import session.*;
 
@@ -10,6 +12,7 @@ public class RequestPopupWindow extends JDialog
 	private Request myRequest;
 	private SessionWindow myParent;
 	private JOptionPane optionPane;
+	private JFileChooser fileChooser;
 	private final String yesOption = "Acceptera";
 	private final String noOption = "Neka";
 	private final String cancelOption = "Avbryt";
@@ -47,6 +50,20 @@ public class RequestPopupWindow extends JDialog
 	public void actionPerformed(ActionEvent e) {
 		switch (e.getActionCommand()) {
 		case yesOption:
+			if (myRequest instanceof IncomingFileRequest) {
+				fileChooser = new JFileChooser();
+				int choice = fileChooser.showSaveDialog(this);
+				if (choice == JFileChooser.APPROVE_OPTION) {
+					IncomingFileRequest ifr = 
+							((IncomingFileRequest) myRequest); 
+					ifr.setFileDestination(fileChooser.getSelectedFile());
+					new FileProgressBarDialog(myParent, ifr.getUsername(),
+							ifr.getFileName(), ifr.getFileSize(),
+							ifr.getFileSender(), false);
+				} else {
+					break;
+				}
+			}
 			myRequest.accept(input.getText());
 			dispose();
 			break;
@@ -84,6 +101,17 @@ public class RequestPopupWindow extends JDialog
 			} else {
 				sb.append(".\n");
 			}
+		} else if (r instanceof IncomingFileRequest) {
+			FileRequest fr = (FileRequest) r;
+			sb.append(String.format("Användaren %s vill skicka filen %s (%s)",
+					r.getUsername(), fr.getFileName(),
+					readableFileSize(fr.getFileSize())));
+			if (r.getMessage() != null && !r.getMessage().isEmpty()) {
+				sb.append(String.format("och hälsar:\n\"%s\"",
+						r.getMessage()));
+			} else {
+				sb.append(".");
+			}
 		} else {
 			sb.append("Okänd request\nFrån: ");
 			try {
@@ -110,5 +138,22 @@ public class RequestPopupWindow extends JDialog
 		if (isVisible()) {
 			dispose();
 		}
+	}
+	
+	/**
+	 * Formats a long as a file size (in kBs, MBs, GBs etc.)
+	 * Not original work! From Mr Ed, Stack Exchange,
+	 * https://stackoverflow.com/questions/3263892/format-file-size-as-mb-gb-etc
+	 * @param size
+	 * @return
+	 */
+	public static String readableFileSize(long size) {
+	    if (size <= 0)
+	    	return "0";
+	    final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
+	    int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
+	    return new DecimalFormat("#,##0.#").
+	    		format(size/Math.pow(1024, digitGroups)) + " " + 
+	    units[digitGroups];
 	}
 }

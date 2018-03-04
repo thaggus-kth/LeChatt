@@ -5,7 +5,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import javax.xml.stream.*;
-
+import file.*;
 import crypto.*;
 
 public class User implements Runnable {
@@ -492,9 +492,10 @@ public class User implements Runnable {
 					}
 					break;
 				case "filerequest":
-					System.err.println("Got unimplemented request "
-							+ "from " + username);
-					//TODO (long term): implement.
+					parseIncomingFileRequest(xmlReader);
+					break;
+				case "fileresponse":
+					parseFileResponse(xmlReader);
 					break;
 				}
 				break;
@@ -528,6 +529,77 @@ public class User implements Runnable {
 				break;
 			}
 		}
+	}
+	
+	/**
+	 * Parses a filerequest tag.
+	 * @param xmlIn the currently parsing XMLReader, currently pointing to a
+	 * START_ELEMENT event with the local name "filerequest"
+	 * @throws XMLStreamException
+	 */
+	private void parseIncomingFileRequest(XMLStreamReader xmlIn) 
+			throws XMLStreamException {
+		IncomingFileRequest r;
+		String message;
+		String fileName = xmlIn.getAttributeValue(null, "name");
+		long fileSize = Long.valueOf(xmlIn.getAttributeValue(null, "size"));
+		String type = xmlIn.getAttributeValue(null, "type");
+		CryptoType ct = CryptoType.PLAIN;
+		if (type != null) {
+			CryptoType.valueOf(type);
+		}
+		/* Due to the postcondition this call must be made after all attributes
+		 * are read.
+		 */
+		message = xmlIn.getElementText();
+		r = new IncomingFileRequest(this, message, ct, fileName, fileSize);
+		myRequests.add(r);
+		fireNewRequestEvent(r);
+	}
+	
+	/**
+	 * Parses a fileresponse tag.
+	 * @param xmlIn the currently parsing XMLReader, currently pointing to a
+	 * START_ELEMENT event with the local name "fileresponse"
+	 * @throws XMLStreamException
+	 */
+	private void parseFileResponse(XMLStreamReader xmlIn) 
+			throws XMLStreamException {
+		OutgoingFileRequest wanted = null;
+		for (Request r : myRequests) {
+			if (r instanceof OutgoingFileRequest) {
+				if (((OutgoingFileRequest) r).isAwaitingReply()) {
+					wanted = (OutgoingFileRequest) r;
+				}
+			}
+		}
+		if (wanted == null) {
+			throw new XMLStreamException("remote user sent a fileresponse but"
+					+ " there is no active filerequest");
+		}
+		
+		if (xmlIn.getAttributeValue(null, "reply") == null) {
+			throw new XMLStreamException("fileresponse tag is missing reply"
+					+ " attribute");
+		}
+		switch (xmlIn.getAttributeValue(null, "reply")) {
+		case "yes":
+			if (xmlIn.getAttributeValue(null, "port") == null) {
+				throw new XMLStreamException("fileresponse tag is missing port"
+						+ "attribute");
+			}
+			wanted.setPort(Integer.valueOf(
+					xmlIn.getAttributeValue(null, "port")));
+			wanted.accept(xmlIn.getElementText());
+			break;
+		case "no":
+			wanted.deny(xmlIn.getElementText());
+			break;
+		default:
+			throw new XMLStreamException("broken value for reply"
+					+ " attribute in fileresponse tag");
+		}
+	
 	}
 	
 	public void addObserver(ConnectionObserver o) {
@@ -567,10 +639,38 @@ public class User implements Runnable {
 		}
 	}
 	
-//	public void sendFileRequest(File file, CryptoType c, String message) {
-//		Request fileRequest = new OutgoingFileRequest(60, message, this, file, c);
-//		myRequests.add(fileRequest);
-//	}
+	/**
+	 * Sends a file request to the remote user for the specified file.
+	 * @param file the file which is requested to send.
+	 * @param c encryption type used for the file transfer
+	 * @param message user's file description
+	 * @return a handle to the underlying progressor. Interested observers
+	 * can add themselves to this Progressor to get progress updates.
+	 */
+	public Progressor sendFileRequest(File file, CryptoType c, String message) {
+		OutgoingFileRequest outgoing = 
+				new OutgoingFileRequest(this, message, c, file);
+		myRequests.add(outgoing);
+		try {
+			xmlOutputMessageHeader(defaultSender);			
+			xmlOut.writeStartElement("filerequest");
+			xmlOut.writeAttribute("name", file.getName());
+			xmlOut.writeAttribute("size",
+					String.valueOf(file.length()));
+			if (c != CryptoType.PLAIN) {
+				xmlOut.writeAttribute("type", c.toString());
+			}
+			xmlOut.writeCharacters(message);
+			xmlOut.writeEndDocument();
+		} catch (XMLStreamException e) {
+			fireUserNotificationEvent(String.format(
+					"Couldn't send file request to %s@%s: " + e,
+					username, connection.getInetAddress()));
+			outgoing.kill();
+			outgoing = null;
+		}
+		return outgoing != null ? outgoing.getFileSender() : null;
+	}
 	
 	public void setActiveCrypto(CryptoType c) {
 		if (c == CryptoType.PLAIN) {
@@ -722,7 +822,7 @@ public class User implements Runnable {
 	}
 	
 	public String getInetAdress(boolean includePort) {
-		String toReturn = connection.getInetAddress().toString();
+		String toReturn = connection.getInetAddress().getHostAddress();
 		if (includePort) {
 			toReturn += ":" + connection.getLocalPort();
 		}

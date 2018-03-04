@@ -36,5 +36,4 @@ public abstract class FileRequest extends Request {
 	public CryptoType getCryptoType() {
 		return cryptoType;
 	}
-	
 }
