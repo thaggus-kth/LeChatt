@@ -511,10 +511,10 @@ public class User implements Runnable {
 		myRequests.add(r);
 	}
 	
-//	public void sendKeyRequest(CryptoType c, String message) {
-//		Request keyRequest = new OutgoingKeyRequest(Request.DEFAULT_LIFETIME, message, this, c);
-//		myRequests.add(keyRequest);
-//	}
+	public void sendKeyRequest(CryptoType c, String message) {
+		Request keyRequest = new OutgoingKeyRequest( this, message, c);
+		myRequests.add(keyRequest);
+	}
 	
 //	public void sendFileRequest(File file, CryptoType c, String message) {
 //		Request fileRequest = new OutgoingFileRequest(60, message, this, file, c);

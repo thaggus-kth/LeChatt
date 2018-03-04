@@ -220,9 +220,7 @@ public class SessionController implements ConnectionObserver {
 	 */
 	public void sendKeyRequest(int userID, CryptoType c, String message) {
 		User receiver = getUserByID(userID);
-		Request keyRequest = new OutgoingKeyRequest(receiver, message, c);
-		receiver.fireNewRequestEvent(keyRequest);
-		System.out.println("keyRequest sent");
+		receiver.sendKeyRequest(c, message);
 		}
 	
 	

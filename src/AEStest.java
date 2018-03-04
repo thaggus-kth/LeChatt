@@ -9,10 +9,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 import crypto.CryptoType;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.FileOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.SecureRandom;
 
 import javax.crypto.SecretKey;
@@ -22,20 +24,21 @@ import java.util.Base64;
 
 
 
+
 public class AEStest {
 	private static final CryptoType TYPE = CryptoType.AES;
 	private static Cipher AEScipher;
 	private static byte[] keyContent;
 
 	public static void main(String[] args) throws Exception {
-		String str = "hej";
+		String str = "hej och hallå!";
 		// Skapa nyckel
 		keyContent = generateKey();
-			
-			System.out.println("Encrypted: " + new String(encrypt(str.getBytes())));			
-			
+			String e = encrypt(str);
+			System.out.println("Encrypted: " + e);		
+			String d = decrypt(e);
 			//Avkryptera
-			System.out.println("Decrypted: " + new String(decrypt(encrypt(str.getBytes()))));
+			System.out.println("Decrypted: " + d);
 			
 			
 		}
@@ -48,23 +51,26 @@ public class AEStest {
 		return key;
 	}
 	
-	public static byte[] encrypt(byte[] bytePlainText) throws Exception {
+	public static String encrypt(String plainText) throws Exception {
+//		byte[] encryptMe = Base64.getMimeDecoder().decode(plainText);
 		AEScipher = Cipher.getInstance("AES");
 		SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 		AEScipher.init(Cipher.ENCRYPT_MODE, AESkey);
-		byte[] cipherData = AEScipher.doFinal(bytePlainText);
-		return cipherData;
+		byte[] cipherData = AEScipher.doFinal(plainText.getBytes());
+		byte[] encrypted =  Base64.getEncoder().encode(cipherData);
+		return new String(encrypted);
 	}
 	
 	public static void setKey(byte[] newKey) {
 		keyContent = newKey;
 	}
 	
-	public static byte[] decrypt(byte[] byteCipher) throws Exception {
+	public static String decrypt(String cipher) throws Exception {
+		byte[] decryptMe = Base64.getDecoder().decode(cipher.getBytes());
 		SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 		AEScipher.init(Cipher.DECRYPT_MODE, AESkey);
-		byte[] bytePlainText = AEScipher.doFinal(byteCipher);
-		return bytePlainText;
+		byte[] bytePlainText = AEScipher.doFinal(decryptMe);
+		return new String(bytePlainText);
 
 //		try {
 //			AEScipher.init(Cipher.DECRYPT_MODE, decodeKey);
