@@ -13,6 +13,7 @@ import javax.swing.text.Element;
 import javax.swing.text.html.*;
 import javax.xml.stream.XMLStreamException;
 
+import file.Progressor;
 import crypto.Crypto;
 import crypto.CryptoType;
 // Remove the next line once all methods are implemented
@@ -197,18 +198,39 @@ public class SessionController implements ConnectionObserver {
 	 * @param file File to be sent
 	 * @param c CryptoType used
 	 * @param message Accompanying message to the request
+	 * @return a handle to the underlying progressor. Interested observers
+	 * can add themselves to this Progressor to get progress updates.
 	 */
-	public void sendFileRequest(int userID, File file, CryptoType c, 
+	public Progressor sendFileRequest(int userID, File file, CryptoType c, 
 								String message) {
-		if (checkCryptoAvailable(userID, c)) {
-			User receiver = getUserByID(userID);
-// Uncomment when filerequest is implemented
-//			Request fileRequest = new OutgoingFileRequest(Request.DEFAULT_LIFETIME,
-//					message, receiver, file, c);
-//			newRequest(fileRequest);
+		Progressor p = null;
+		if (checkCryptoAvailable(userID, c) 
+				&& userAvailableForFileRequest(userID)) {
+			p = getUserByID(userID).sendFileRequest(file, c, message);
 		} else {
-			//notify that the crypto is unavailable
+			//TODO: throw an exception
+			System.err.println("Tried to send file request with unavailable"
+					+ " crypto or to a busy user.");
 		}
+		return p;
+	}
+	
+	/**
+	 * Checks if a user is available for sending a file request.
+	 * A user may only have one file request awaiting a response at any time.
+	 * Once a transfer has been started, however, new requests may be sent.
+	 * @param userID the user to check.
+	 * @return true if it is currently possible to send a file request.
+	 * false if not.
+	 */
+	public boolean userAvailableForFileRequest(int userID) {
+		boolean answer = true;
+		for (Request r : getUserByID(userID).myRequests) {
+			if (r instanceof OutgoingFileRequest) {
+				answer = !((OutgoingFileRequest) r).isAwaitingReply();
+			}
+		}
+		return answer;
 	}
 	
 	
@@ -231,12 +253,24 @@ public class SessionController implements ConnectionObserver {
 	 * @return true if crypto is available for the user
 	 */
 	public boolean checkCryptoAvailable(String user, CryptoType c) {
+		boolean answer = false;
 		User u = stringToUser(user);
-		return u.myCryptos.containsKey(c);
+		if (c == CryptoType.PLAIN) {
+			answer = true;
+		} else {
+			answer = u.myCryptos.containsKey(c); 
+		}
+		return answer;
 	}
 	
 	public boolean checkCryptoAvailable(int userID, CryptoType c) {
-		return getUserByID(userID).myCryptos.containsKey(c);
+		boolean answer = false;
+		if (c == CryptoType.PLAIN) {
+			answer = true;
+		} else {
+			answer = getUserByID(userID).myCryptos.containsKey(c);
+		}
+		return answer;
 	}
 	
 	public CryptoType[] getAvailableCryptos(int userID) {

@@ -36,7 +36,7 @@ public class FileSender extends Progressor implements Runnable {
 		fileStream = new FileInputStream(f);
 		mySocket = new Socket(reciever, port);
 		myCrypto = c;
-		bytesToSend = f.getTotalSpace();
+		bytesToSend = f.length();
 		th.start();
 	}
 	
@@ -49,7 +49,7 @@ public class FileSender extends Progressor implements Runnable {
 		byte[] bytesIn = new byte[FILE_CHUNK_SIZE];
 		int nBytesRead;
 		long totalBytesSent = 0;
-		int progress = 0;
+		int progress = -1; //-1 to make the first loop call observers with 0
 		try {
 			socketOut = mySocket.getOutputStream();
 			nBytesRead = fileStream.read(bytesIn);
@@ -61,17 +61,30 @@ public class FileSender extends Progressor implements Runnable {
 					/* If we are using crypto, encrypt the bytes */
 					bytesIn = myCrypto.encrypt(bytesIn);
 				}
+				if (nBytesRead < FILE_CHUNK_SIZE) {
+					byte[] bytesIn2 = new byte[nBytesRead];
+					for (int i = 0; i < nBytesRead; i++) {
+						bytesIn2[i] = bytesIn[i];
+					}
+					bytesIn = bytesIn2;
+				}
 				socketOut.write(bytesIn);
 				totalBytesSent += nBytesRead;
 				/* Check our progress and update observers if we incremented */
-				if (100 * Math.floorDiv(totalBytesSent, bytesToSend) 
+				if ((int) (totalBytesSent * 100.0 / bytesToSend)
 						> progress) {
-					progress = 100 * (int) Math.floorDiv(
-							totalBytesSent, bytesToSend);
+					progress = (int) (totalBytesSent * 100.0 / bytesToSend);
 					updateObserversOnProgress(progress);
 				}
 				/* Read the next chunk */
+				bytesIn = new byte[FILE_CHUNK_SIZE];
 				nBytesRead = fileStream.read(bytesIn);
+				try {
+					Thread.sleep(20);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			signalNormalTermination();
 		} catch (IOException e) {

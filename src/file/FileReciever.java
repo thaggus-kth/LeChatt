@@ -33,7 +33,7 @@ public class FileReciever extends Progressor implements Runnable {
 		myServerSocket = new ServerSocket(0);
 		fileOut = new FileOutputStream(pathToWrite);
 		myCrypto = crypto;
-		
+		bytesToRecieve = fileSize;
 		th.start();
 	}
 	
@@ -46,7 +46,7 @@ public class FileReciever extends Progressor implements Runnable {
 		InputStream socketIn = null;
 		long totalBytesRecieved = 0;
 		byte[] bytesIn = new byte[FileSender.FILE_CHUNK_SIZE];
-		int progress = 0;
+		int progress = -1; //-1 to make the first loop call observers with 0
 		int nBytesRead;
 		try {
 			/* Accept incoming connection */
@@ -61,17 +61,33 @@ public class FileReciever extends Progressor implements Runnable {
 				if (myCrypto != null) {
 					bytesIn = myCrypto.decrypt(bytesIn);
 				}
+				if (nBytesRead < FileSender.FILE_CHUNK_SIZE) {
+					byte[] bytesIn2 = new byte[nBytesRead];
+					for (int i = 0; i < nBytesRead; i++) {
+						bytesIn2[i] = bytesIn[i];
+					}
+					bytesIn = bytesIn2;
+				}
 				fileOut.write(bytesIn);
 				totalBytesRecieved += nBytesRead;
 				/* Check our progress and update observers if we incremented */
-				if (100 * Math.floorDiv(totalBytesRecieved, bytesToRecieve)
+				if ((int) (totalBytesRecieved * 100.0 / bytesToRecieve)
 						> progress) {
-					progress = 100 * (int) Math.floorDiv(
-							totalBytesRecieved, bytesToRecieve);
+					progress = 
+						(int) (totalBytesRecieved * 100.0 / bytesToRecieve);
 					updateObserversOnProgress(progress);
 				}
 				/* Read the next chunk */
+				bytesIn = new byte[FileSender.FILE_CHUNK_SIZE];
 				nBytesRead = socketIn.read(bytesIn);
+				//TODO: debug
+				try {
+					Thread.sleep(20);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 			}
 			fileOut.flush();
 			/* Check if we recieved the expected amount of bytes */

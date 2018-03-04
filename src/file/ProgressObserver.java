@@ -9,7 +9,8 @@ public interface ProgressObserver {
 	
 	/**
 	 * This method is called each time the progress increases by one-percent-
-	 * unit.
+	 * unit. The start of the process is indicated by this method being called
+	 * with 0 percent progress.
 	 * @param currentPercent
 	 */
 	public void incrementPercentProgress(int currentPercent);

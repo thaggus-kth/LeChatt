@@ -34,6 +34,7 @@ public abstract class Progressor {
 	
 	/**
 	 * Notifies the observers that we have progressed a certain percent.
+	 * When the process starts, this should be called with a value of 0.
 	 * @param percentProgress percent progress as integer between 0 and 100.
 	 */
 	protected void updateObserversOnProgress(int percentProgress) {

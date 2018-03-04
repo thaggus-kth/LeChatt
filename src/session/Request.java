@@ -33,7 +33,7 @@ public abstract class Request implements java.awt.event.ActionListener {
 		myUser = user;
 		myID = nextID++;
 		timeOutTimer = new Timer(DEFAULT_LIFETIME, this);
-		timeOutTimer.start();
+		//timeOutTimer.start();
 	}
 	/**
 	 * Gets the instance-unique ID number of the request.

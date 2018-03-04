@@ -99,7 +99,9 @@ public class SessionWindow extends JFrame implements ChatObserver,
 	public void updateView() {
 		view.setDocument(mySession.getChatLog());
 		sendFileButton.setEnabled(
-				userInfo.getSelectedID() != AbstractUserInfo.NO_SELECTION);
+				userInfo.getSelectedID() != AbstractUserInfo.NO_SELECTION 
+				&& mySession.userAvailableForFileRequest(
+						userInfo.getSelectedID()));
 		/* Scroll to bottom */
 		view.setCaretPosition(view.getDocument().getLength());
 	}

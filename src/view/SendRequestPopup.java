@@ -1,6 +1,7 @@
 package view;
 
 import java.awt.event.ActionEvent;
+
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import javax.swing.*;
 import crypto.*;
 import session.SessionController;
+import file.Progressor;
 
 /**
  * Popup window which collects all user info neccessary to send a 
@@ -24,6 +26,7 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 	private String myUsersName;
 	private SupportedRequests myType;
 	private SessionController mySession;
+	private JFrame myParent;
 	private CryptoType selectedCryptoType = CryptoType.PLAIN;
 	private JComboBox<String> cryptoSelection = new JComboBox<String>();
 	private JButton sendButton = new JButton("Skicka");
@@ -38,7 +41,7 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 	 * @author thaggus
 	 *
 	 */
-	public enum SupportedRequests {
+	public static enum SupportedRequests {
 		FILE_REQUEST,
 		KEY_REQUEST;
 	}
@@ -63,6 +66,7 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 		myUserID = userID;
 		myType = type;
 		mySession = session;
+		myParent = parent;
 		myUsersName = session.getUsernamesAndIDs().get(myUserID);
 		
 		components.add(makeInfoText());
@@ -167,9 +171,13 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 					JOptionPane.showMessageDialog(this, "Välj en fil!",
 							"Fel", JOptionPane.ERROR_MESSAGE);
 				} else {
-					mySession.sendFileRequest(myUserID,
+					Progressor p = mySession.sendFileRequest(myUserID,
 							fileChooser.getSelectedFile(),
 							selectedCryptoType, input.getText());
+					new FileProgressBarDialog(myParent, myUsersName,
+							fileChooser.getSelectedFile().getName(),
+							fileChooser.getSelectedFile().length(),
+							p, true);
 				}
 				dispose();
 			} else if (myType == SupportedRequests.KEY_REQUEST) {
