@@ -67,7 +67,7 @@ public class AESCrypto implements Crypto {
 			
 			SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 			AESCipher.init(Cipher.ENCRYPT_MODE, AESkey);
-			encryptedBytes = AESCipher.doFinal(plainBytes);
+			encryptedBytes = Base64.getEncoder().encode(AESCipher.doFinal(plainBytes));
 		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -77,10 +77,11 @@ public class AESCrypto implements Crypto {
 	
 	public byte[] decrypt(byte[] encryptedBytes) {
 		byte[] decryptedBytes = null;
+		byte[] decryptMe = Base64.getDecoder().decode(encryptedBytes);
 		try {
 			SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 			AESCipher.init(Cipher.DECRYPT_MODE, AESkey);
-			decryptedBytes = AESCipher.doFinal(encryptedBytes);
+			decryptedBytes = AESCipher.doFinal(decryptMe);
 		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
