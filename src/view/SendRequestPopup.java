@@ -135,8 +135,6 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 				cryptoSelection.addItem(ct.toString());
 			}
 		}
-		selectedCryptoType = CryptoType.valueOf(
-					(String) cryptoSelection.getSelectedItem());
 		cryptoSelection.addActionListener(new ActionListener() {
 
 			@Override
@@ -150,7 +148,10 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 			}
 			
 		});
+		cryptoSelection.setSelectedIndex(0);
 	}
+	
+	public void 
 	
 	@Override
 	/**
