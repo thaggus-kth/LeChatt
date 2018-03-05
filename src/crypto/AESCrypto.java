@@ -18,10 +18,20 @@ public class AESCrypto implements Crypto {
 	private static byte[] keyContent;
 	
 	public AESCrypto(String key) {
+		try {
+			AESCipher = Cipher.getInstance("AES");
+		} catch ( NoSuchAlgorithmException | NoSuchPaddingException e ) {
+			
+		}
 		setKey(key);
 	}
 	
 	public AESCrypto() {
+		try {
+			AESCipher = Cipher.getInstance("AES");
+		} catch ( NoSuchAlgorithmException | NoSuchPaddingException e ) {
+			
+		}
 		keyContent = generateKey();
 	}
 	
@@ -54,12 +64,11 @@ public class AESCrypto implements Crypto {
 	public byte[] encrypt(byte[] plainBytes) {
 		byte[] encryptedBytes = null;
 		try {
-			AESCipher = Cipher.getInstance("AES");
+			
 			SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 			AESCipher.init(Cipher.ENCRYPT_MODE, AESkey);
 			encryptedBytes = AESCipher.doFinal(plainBytes);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | 
-				IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
+		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -84,13 +93,11 @@ public class AESCrypto implements Crypto {
 	public String encrypt(String plainText) {
 		byte[] encryptedBytes = null;
 		try {
-			AESCipher = Cipher.getInstance("AES");
 			SecretKeySpec AESkey = new SecretKeySpec(keyContent, "AES");
 			AESCipher.init(Cipher.ENCRYPT_MODE, AESkey);
 			encryptedBytes = Base64.getEncoder().encode(AESCipher.
 					doFinal(plainText.getBytes()));
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | 
-				IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
+		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
