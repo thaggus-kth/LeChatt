@@ -150,9 +150,7 @@ public class SendRequestPopup extends JDialog implements ActionListener {
 		});
 		cryptoSelection.setSelectedIndex(0);
 	}
-	
-	public void 
-	
+		
 	@Override
 	/**
 	 * Monitors the buttons of this dialog. Sends request if Send button
